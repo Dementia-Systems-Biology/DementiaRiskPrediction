@@ -1,0 +1,243 @@
+"","PATNO","X0","X1","X2","X3","X4","X5","X6","X7","X8","CogDecon","n"
+"1","3001",NA,NA,"Normal","Cognitive Complaint","Cognitive Complaint","Cognitive Complaint",NA,"Normal","Cognitive Complaint","UnstableNormal",6
+"2","3002",NA,NA,"Cognitive Complaint","Cognitive Complaint","Cognitive Complaint","Cognitive Complaint",NA,"Cognitive Complaint","Cognitive Complaint","Unstable",6
+"3","3010",NA,NA,"Normal","Cognitive Complaint",NA,"Normal",NA,"Cognitive Complaint","Normal","UnstableNormal",5
+"4","3012",NA,NA,NA,"Cognitive Complaint","Cognitive Complaint",NA,NA,"Cognitive Complaint",NA,"Unstable",3
+"5","3020",NA,"Cognitive Complaint","Cognitive Complaint","Cognitive Complaint",NA,NA,NA,"Cognitive Complaint",NA,"Unstable",4
+"6","3021",NA,"Cognitive Complaint","Cognitive Complaint","Cognitive Complaint",NA,NA,NA,"Cognitive Complaint",NA,"Unstable",4
+"7","3023",NA,"Cognitive Complaint","Cognitive Complaint","Cognitive Complaint","Cognitive Complaint",NA,NA,"Cognitive Complaint",NA,"Unstable",5
+"8","3024",NA,"Normal",NA,"Normal",NA,NA,NA,"Cognitive Complaint",NA,"UnstableNormal",3
+"9","3051",NA,NA,"Normal","Cognitive Complaint","Normal","Normal","Normal","Normal","Normal","UnstableNormal",8
+"10","3052",NA,NA,"Normal","Normal","Normal","Normal","Cognitive Complaint","Normal","Cognitive Complaint","UnstableNormal",7
+"11","3054",NA,NA,"Normal",NA,"Cognitive Complaint","Cognitive Complaint","Normal","Normal","Cognitive Complaint","UnstableNormal",7
+"12","3060",NA,NA,"Normal","Normal","Normal","Normal","Cognitive Complaint","Cognitive Complaint","Normal","UnstableNormal",7
+"13","3061",NA,NA,"Normal",NA,"Normal",NA,"Normal","Normal","Normal","Normal",5
+"14","3078",NA,"Normal","Normal","Normal","Normal","Cognitive Complaint",NA,"Normal",NA,"UnstableNormal",6
+"15","3083","Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",8
+"16","3107",NA,NA,"Cognitive Complaint","Normal","Cognitive Complaint","Normal","Cognitive Complaint","Cognitive Complaint","Cognitive Complaint","UnstableNormal",7
+"17","3108",NA,NA,"Normal","Cognitive Complaint","Cognitive Complaint","Cognitive Complaint","Normal","Normal","Normal","UnstableNormal",7
+"18","3119",NA,"Normal","Normal","Normal","Cognitive Complaint","Normal","Normal","Normal",NA,"UnstableNormal",7
+"19","3120",NA,"Cognitive Complaint","Normal","Normal","Normal","Cognitive Complaint","Normal","Cognitive Complaint",NA,"UnstableNormal",7
+"20","3122",NA,"Normal","Normal","Normal","Cognitive Complaint",NA,"Cognitive Complaint","Cognitive Complaint",NA,"UnstableNormal",6
+"21","3125",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",7
+"22","3126",NA,"Normal","Normal","Cognitive Complaint","Cognitive Complaint","Cognitive Complaint","Normal","Normal",NA,"UnstableNormal",7
+"23","3127",NA,NA,NA,"Normal","Normal","Normal",NA,"Normal",NA,"Normal",4
+"24","3128",NA,"Normal","Normal","Normal","Normal","Normal",NA,"Normal",NA,"Normal",6
+"25","3168",NA,"Cognitive Complaint","Normal","Normal","Normal",NA,NA,"Normal","Normal","UnstableNormal",6
+"26","3173",NA,NA,NA,"Normal",NA,NA,"Normal","Normal","Normal","Normal",4
+"27","3176",NA,"Normal","Cognitive Complaint",NA,"Cognitive Complaint",NA,"Normal","Normal",NA,"UnstableNormal",5
+"28","3184","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",NA,"Normal",7
+"29","3203",NA,NA,"Normal","Normal","Normal","Cognitive Complaint","Normal","Normal","Normal","UnstableNormal",8
+"30","3205",NA,NA,NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal",6
+"31","3207",NA,NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",7
+"32","3220",NA,"Normal","Normal","Normal","Normal","Cognitive Complaint","Normal","Normal",NA,"UnstableNormal",7
+"33","3223",NA,NA,"Normal","Normal","Normal","Normal","Normal","Cognitive Complaint","Normal","UnstableNormal",7
+"34","3227",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",7
+"35","3230",NA,"Normal","Normal","Normal","Normal","Cognitive Complaint","Normal","Normal",NA,"UnstableNormal",7
+"36","3231",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",7
+"37","3285",NA,"Cognitive Complaint","Cognitive Complaint","Cognitive Complaint","Cognitive Complaint","Cognitive Complaint",NA,"Cognitive Complaint",NA,"Unstable",6
+"38","3305",NA,NA,NA,NA,NA,"Normal","Normal","Cognitive Complaint","Cognitive Complaint","UnstableNormal",4
+"39","3308",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Cognitive Complaint","Cognitive Complaint","UnstableNormal",8
+"40","3309",NA,"Normal","Normal","Normal","Normal","Normal","Cognitive Complaint","Cognitive Complaint","Cognitive Complaint","UnstableNormal",8
+"41","3312",NA,"Normal","Normal","Normal","Normal","Cognitive Complaint","Cognitive Complaint","Cognitive Complaint",NA,"UnstableNormal",7
+"42","3322",NA,NA,"Normal","Normal","Cognitive Complaint","Normal","Cognitive Complaint","Cognitive Complaint",NA,"UnstableNormal",6
+"43","3328",NA,NA,"Normal","Normal","Normal","Normal","Normal","Cognitive Complaint",NA,"UnstableNormal",6
+"44","3354",NA,NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",7
+"45","3359",NA,NA,"Cognitive Complaint","Normal","Normal","Normal","Normal","Cognitive Complaint",NA,"UnstableNormal",6
+"46","3365",NA,NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",7
+"47","3367",NA,NA,NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal",6
+"48","3371",NA,"Normal",NA,"Normal",NA,"Normal","Cognitive Complaint","Cognitive Complaint",NA,"UnstableNormal",5
+"49","3372",NA,"Normal","Normal","Normal","Cognitive Complaint","Normal","Normal","Normal","Normal","UnstableNormal",8
+"50","3373",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",7
+"51","3374",NA,"Normal","Normal","Normal","Cognitive Complaint","Normal","Cognitive Complaint","Normal",NA,"UnstableNormal",7
+"52","3377",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",7
+"53","3378",NA,"Normal","Normal","Normal",NA,"Normal","Normal","Cognitive Complaint",NA,"UnstableNormal",6
+"54","3380",NA,"Normal","Normal","Normal",NA,"Normal",NA,"Normal",NA,"Normal",5
+"55","3383","Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",8
+"56","3387","Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",8
+"57","3406",NA,NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",8
+"58","3407",NA,NA,"Normal","Normal","Normal","Normal","Normal","Normal","Cognitive Complaint","UnstableNormal",8
+"59","3409",NA,NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",8
+"60","3415",NA,NA,"Normal",NA,"Normal","Normal","Cognitive Complaint","Normal","Normal","UnstableNormal",6
+"61","3417",NA,NA,"Normal","Normal","Normal","Normal","Normal","Normal","Cognitive Complaint","UnstableNormal",7
+"62","3418",NA,NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",7
+"63","3419",NA,NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",7
+"64","3420",NA,NA,"Normal","Normal","Normal",NA,"Normal","Normal",NA,"Normal",5
+"65","3422",NA,NA,"Normal","Normal","Cognitive Complaint","Normal","Normal","Normal","Normal","UnstableNormal",7
+"66","3431",NA,"Normal",NA,"Normal","Normal","Cognitive Complaint","Normal","Normal","Normal","UnstableNormal",7
+"67","3432",NA,"Normal","Normal","Normal","Normal","Normal",NA,"Cognitive Complaint",NA,"UnstableNormal",6
+"68","3433",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",8
+"69","3436",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Cognitive Complaint","Normal","UnstableNormal",8
+"70","3439",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",8
+"71","3443",NA,"Normal",NA,NA,"Normal","Normal","Normal","Normal",NA,"Normal",5
+"72","3445",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",7
+"73","3454",NA,NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",7
+"74","3459",NA,NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",7
+"75","3461",NA,NA,"Normal","Normal","Cognitive Complaint","Normal","Cognitive Complaint","Cognitive Complaint","Cognitive Complaint","UnstableNormal",7
+"76","3469",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",8
+"77","3470",NA,"Normal","Normal","Normal","Normal","Cognitive Complaint","Normal","Normal",NA,"UnstableNormal",7
+"78","3472",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",7
+"79","3475","Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",8
+"80","3500",NA,NA,"Cognitive Complaint","Cognitive Complaint",NA,"Normal","Normal","Normal","Normal","UnstableNormal",6
+"81","3501",NA,NA,"Normal",NA,NA,"Cognitive Complaint","Normal","Normal",NA,"UnstableNormal",5
+"82","3516",NA,NA,"Normal","Normal","Normal",NA,"Normal","Normal","Cognitive Complaint","UnstableNormal",6
+"83","3528",NA,NA,"Normal","Normal","Cognitive Complaint","Normal","Normal","Normal","Normal","UnstableNormal",7
+"84","3532",NA,"Cognitive Complaint","Cognitive Complaint","Cognitive Complaint","Cognitive Complaint","Cognitive Complaint",NA,"Cognitive Complaint",NA,"Unstable",6
+"85","3540","Cognitive Complaint","Cognitive Complaint","Cognitive Complaint",NA,NA,NA,"Cognitive Complaint","Cognitive Complaint",NA,"Unstable",5
+"86","3559",NA,NA,"Normal",NA,"Normal","Normal","Normal","Normal","Normal","Normal",6
+"87","3577",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",8
+"88","3585",NA,"Normal",NA,"Normal",NA,"Normal","Normal","Cognitive Complaint",NA,"UnstableNormal",5
+"89","3586",NA,NA,"Normal","Normal","Normal",NA,"Cognitive Complaint","Normal",NA,"UnstableNormal",5
+"90","3603",NA,NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",7
+"91","3607",NA,NA,"Normal","Normal","Normal","Normal","Cognitive Complaint","Cognitive Complaint","Cognitive Complaint","UnstableNormal",7
+"92","3622",NA,NA,NA,"Normal",NA,"Cognitive Complaint",NA,"Cognitive Complaint","Normal","UnstableNormal",4
+"93","3650",NA,NA,"Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",6
+"94","3654",NA,NA,"Normal","Normal","Normal","Normal","Normal","Cognitive Complaint","Normal","UnstableNormal",7
+"95","3701",NA,NA,"Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",6
+"96","3704",NA,NA,"Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",6
+"97","3709",NA,"Cognitive Complaint","Normal",NA,"Normal","Normal",NA,"Cognitive Complaint",NA,"UnstableNormal",5
+"98","3760",NA,NA,"Cognitive Complaint","Normal",NA,"Normal","Cognitive Complaint","Normal",NA,"UnstableNormal",5
+"99","3773",NA,"Normal","Normal","Normal",NA,"Normal","Normal","Normal","Normal","Normal",7
+"100","3775",NA,"Cognitive Complaint","Cognitive Complaint","Cognitive Complaint","Normal","Normal","Normal","Cognitive Complaint",NA,"UnstableNormal",7
+"101","3778",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",7
+"102","3780",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Cognitive Complaint",NA,"UnstableNormal",7
+"103","3785",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",7
+"104","3787",NA,"Normal","Normal","Cognitive Complaint","Normal","Normal","Cognitive Complaint","Cognitive Complaint",NA,"UnstableNormal",7
+"105","3789",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",7
+"106","3792",NA,"Cognitive Complaint","Cognitive Complaint","Cognitive Complaint","Normal",NA,"Normal","Normal",NA,"UnstableNormal",6
+"107","3800",NA,NA,"Cognitive Complaint","Normal","Normal","Normal","Normal","Normal","Normal","UnstableNormal",7
+"108","3819",NA,"Normal","Normal","Normal","Normal","Normal","Cognitive Complaint","Normal","Normal","UnstableNormal",8
+"109","3823",NA,"Normal","Normal","Normal","Normal","Cognitive Complaint","Normal","Normal",NA,"UnstableNormal",7
+"110","3825",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",7
+"111","3829",NA,"Normal","Normal","Normal","Normal","Cognitive Complaint","Cognitive Complaint","Normal",NA,"UnstableNormal",7
+"112","3830",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",7
+"113","3831",NA,"Cognitive Complaint","Normal","Cognitive Complaint",NA,"Normal","Normal","Normal",NA,"UnstableNormal",6
+"114","3832","Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",8
+"115","3835",NA,"Normal","Normal","Normal","Normal","Cognitive Complaint",NA,"Normal",NA,"UnstableNormal",6
+"116","3838","Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",8
+"117","3869","Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",8
+"118","3900",NA,NA,"Normal","Normal","Cognitive Complaint",NA,NA,"Cognitive Complaint",NA,"UnstableNormal",4
+"119","3905",NA,"Normal","Normal","Normal","Normal",NA,NA,"Normal",NA,"Normal",5
+"120","3910","Normal","Normal","Normal","Normal",NA,NA,"Normal","Normal",NA,"Normal",6
+"121","3911","Normal","Normal","Normal","Normal","Normal",NA,"Normal","Normal",NA,"Normal",7
+"122","3914","Normal","Normal","Normal","Normal","Normal",NA,"Normal","Normal",NA,"Normal",7
+"123","3951",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",8
+"124","3954",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",7
+"125","3960","Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",8
+"126","4001",NA,NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",7
+"127","4011",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",8
+"128","4019",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",8
+"129","4022",NA,"Normal",NA,"Normal","Normal",NA,"Normal","Normal",NA,"Normal",5
+"130","4024",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",7
+"131","4025",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",7
+"132","4026",NA,"Normal","Normal",NA,NA,NA,"Cognitive Complaint","Normal",NA,"UnstableNormal",4
+"133","4027",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",7
+"134","4029","Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",8
+"135","4030","Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",8
+"136","4051",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",7
+"137","4052",NA,NA,"Normal","Normal","Normal","Normal","Cognitive Complaint","Cognitive Complaint",NA,"UnstableNormal",6
+"138","4054",NA,NA,NA,NA,"Normal","Normal","Normal","Normal",NA,"Normal",4
+"139","4055",NA,NA,"Normal","Normal","Normal","Normal","Cognitive Complaint","Normal",NA,"UnstableNormal",6
+"140","4056",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Cognitive Complaint",NA,"UnstableNormal",7
+"141","4057","Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",8
+"142","4059","Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",8
+"143","4071",NA,NA,"Normal","Cognitive Complaint","Cognitive Complaint",NA,NA,"Cognitive Complaint",NA,"UnstableNormal",4
+"144","4074",NA,"Normal","Cognitive Complaint",NA,NA,NA,"Normal","Normal",NA,"UnstableNormal",4
+"145","4091","Normal","Normal","Normal","Normal","Normal","Normal","Normal","Cognitive Complaint",NA,"UnstableNormal",8
+"146","4098","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",NA,"Normal",7
+"147","4099","Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",8
+"148","4101","Normal","Normal","Normal","Normal","Normal","Normal","Cognitive Complaint","Normal",NA,"UnstableNormal",8
+"149","4102","Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",8
+"150","4103","Normal","Normal","Normal","Normal","Normal",NA,"Normal","Normal",NA,"Normal",7
+"151","4106","Normal","Normal","Normal","Normal","Normal","Normal","Normal","Cognitive Complaint",NA,"UnstableNormal",8
+"152","4108","Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",8
+"153","4111","Normal","Normal","Normal","Normal","Normal","Normal","Cognitive Complaint","Normal",NA,"UnstableNormal",8
+"154","4112","Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",8
+"155","4115","Normal","Normal","Normal","Normal","Normal","Normal","Normal","Normal",NA,"Normal",8
+"156","4123","Normal","Normal","Normal","Normal","Normal",NA,NA,"Normal",NA,"Normal",6
+"157","3068",NA,"Normal","Normal","Cognitive Complaint","Normal","Cognitive Complaint","Normal",NA,"Dementia","Dementia",7
+"158","3076",NA,"Dementia","Dementia","Dementia","Dementia",NA,NA,NA,NA,"Dementia",4
+"159","3077",NA,"Normal",NA,"Cognitive Complaint","Cognitive Complaint","Cognitive Complaint","Cognitive Complaint","Cognitive Complaint","Dementia","Dementia",7
+"160","3080",NA,"Cognitive Complaint","Normal","Cognitive Complaint","Dementia","Dementia",NA,NA,NA,"Dementia",5
+"161","3102",NA,"Cognitive Complaint","Dementia","Cognitive Complaint","MCI",NA,NA,NA,NA,"Dementia",4
+"162","3110",NA,NA,"Normal","MCI","MCI","MCI","Dementia","Dementia","Dementia","Dementia",7
+"163","3111",NA,NA,NA,"MCI",NA,"Dementia","Dementia","MCI","Dementia","Dementia",5
+"164","3116",NA,"MCI","Dementia","MCI","Dementia","Dementia",NA,NA,NA,"Dementia",5
+"165","3118",NA,NA,"MCI","Cognitive Complaint","Cognitive Complaint","Cognitive Complaint","Dementia","Cognitive Complaint","MCI","Dementia",7
+"166","3218",NA,NA,NA,"MCI","MCI",NA,"MCI","MCI","Dementia","Dementia",5
+"167","3224",NA,"Cognitive Complaint","Cognitive Complaint",NA,"MCI",NA,NA,"Dementia",NA,"Dementia",4
+"168","3279",NA,NA,"Dementia","MCI","Dementia","Dementia",NA,NA,NA,"Dementia",4
+"169","3281",NA,NA,NA,"MCI","Dementia","MCI","MCI",NA,NA,"Dementia",4
+"170","3313",NA,NA,NA,"Cognitive Complaint","Dementia",NA,NA,NA,NA,"Dementia",2
+"171","3321",NA,NA,"MCI","Dementia","Cognitive Complaint","Cognitive Complaint",NA,NA,NA,"Dementia",4
+"172","3323",NA,NA,"MCI","MCI",NA,"Dementia",NA,NA,NA,"Dementia",3
+"173","3332","Normal","Normal","Cognitive Complaint","Cognitive Complaint","Cognitive Complaint","Dementia",NA,NA,NA,"Dementia",6
+"174","3333","MCI","MCI","MCI","MCI","MCI","MCI","Dementia",NA,NA,"Dementia",7
+"175","3352",NA,NA,"Dementia","Dementia","Dementia",NA,NA,NA,NA,"Dementia",3
+"176","3386","Normal","MCI","MCI",NA,"MCI","Normal","Dementia","Dementia",NA,"Dementia",7
+"177","3455",NA,NA,"MCI","Dementia","Dementia",NA,NA,NA,NA,"Dementia",3
+"178","3473","Normal","Normal","Normal",NA,"Normal","Dementia","Cognitive Complaint",NA,NA,"Dementia",6
+"179","3502",NA,NA,"Normal","Normal","Cognitive Complaint","Cognitive Complaint","Dementia","Dementia",NA,"Dementia",6
+"180","3505",NA,NA,"Cognitive Complaint","Normal","Dementia","Dementia",NA,NA,NA,"Dementia",4
+"181","3514",NA,"Normal",NA,"Dementia",NA,NA,NA,NA,NA,"Dementia",2
+"182","3552",NA,NA,"Dementia","MCI","Dementia","MCI",NA,"Dementia","Dementia","Dementia",6
+"183","3557",NA,NA,"Dementia","Dementia","Dementia","Dementia","Dementia","Dementia","Dementia","Dementia",8
+"184","3588",NA,NA,"Dementia","Cognitive Complaint","Cognitive Complaint","Cognitive Complaint",NA,"Cognitive Complaint",NA,"Dementia",5
+"185","3616",NA,NA,NA,NA,"Cognitive Complaint",NA,"Dementia",NA,NA,"Dementia",2
+"186","3625",NA,NA,"Normal","Normal",NA,NA,NA,"Dementia",NA,"Dementia",3
+"187","3632",NA,NA,NA,"MCI","Dementia","Dementia","Dementia",NA,NA,"Dementia",4
+"188","3700",NA,NA,"MCI","Dementia","Dementia","Dementia",NA,NA,NA,"Dementia",4
+"189","3702",NA,NA,"Dementia","Dementia","Dementia","Dementia","Dementia","Dementia",NA,"Dementia",6
+"190","3710",NA,NA,"Normal",NA,"Dementia","Dementia",NA,NA,NA,"Dementia",3
+"191","3771",NA,"Dementia","MCI","MCI","Dementia",NA,NA,NA,NA,"Dementia",4
+"192","3802",NA,NA,"Dementia","MCI","Dementia",NA,NA,NA,NA,"Dementia",3
+"193","3814",NA,"Normal","Normal","Normal","Cognitive Complaint",NA,"Cognitive Complaint",NA,"Dementia","Dementia",6
+"194","3818",NA,"MCI","Dementia","Dementia",NA,NA,NA,NA,NA,"Dementia",3
+"195","3826",NA,NA,"Dementia","MCI","MCI","MCI",NA,"MCI",NA,"Dementia",5
+"196","3834",NA,NA,NA,"Cognitive Complaint",NA,"MCI","Dementia",NA,NA,"Dementia",3
+"197","4058",NA,NA,NA,NA,NA,"MCI","Dementia",NA,NA,"Dementia",2
+"198","4076",NA,NA,"Normal","MCI",NA,NA,NA,"Dementia",NA,"Dementia",3
+"199","4096",NA,NA,"MCI",NA,NA,"MCI",NA,"Dementia",NA,"Dementia",3
+"200","4122",NA,"MCI","MCI",NA,NA,"Dementia","Dementia",NA,NA,"Dementia",4
+"201","3028","Cognitive Complaint","Cognitive Complaint","Cognitive Complaint","Normal",NA,"MCI","MCI",NA,NA,"MCI",6
+"202","3056",NA,NA,"Normal","Normal","Cognitive Complaint","Normal","Cognitive Complaint","Cognitive Complaint","MCI","MCI",7
+"203","3058",NA,NA,"MCI","MCI",NA,NA,NA,NA,NA,"MCI",2
+"204","3059",NA,NA,"MCI","MCI","MCI",NA,NA,NA,NA,"MCI",3
+"205","3062",NA,NA,"Normal","Cognitive Complaint","Normal","MCI","Cognitive Complaint","Cognitive Complaint","Cognitive Complaint","MCI",7
+"206","3066",NA,NA,"Normal","Normal","Normal",NA,"Cognitive Complaint","Cognitive Complaint","MCI","MCI",6
+"207","3067",NA,NA,"Normal","Normal","Normal","Normal","Cognitive Complaint","MCI","Cognitive Complaint","MCI",7
+"208","3105",NA,NA,"Normal","MCI","Cognitive Complaint",NA,NA,NA,NA,"MCI",3
+"209","3113",NA,NA,"Normal","MCI",NA,NA,NA,NA,NA,"MCI",2
+"210","3178","Cognitive Complaint","Cognitive Complaint","Cognitive Complaint","Cognitive Complaint","MCI",NA,NA,NA,NA,"MCI",5
+"211","3209",NA,NA,"Normal",NA,"MCI",NA,NA,NA,NA,"MCI",2
+"212","3214",NA,NA,"Cognitive Complaint","MCI","MCI","MCI","Cognitive Complaint","MCI",NA,"MCI",6
+"213","3228",NA,"Cognitive Complaint","Normal","Normal",NA,"Cognitive Complaint","Cognitive Complaint","MCI",NA,"MCI",6
+"214","3254",NA,NA,NA,NA,"MCI",NA,NA,NA,NA,"MCI",1
+"215","3275",NA,NA,NA,"Cognitive Complaint","Cognitive Complaint","Cognitive Complaint","MCI","MCI","MCI","MCI",6
+"216","3385","MCI",NA,"MCI","MCI",NA,NA,NA,NA,NA,"MCI",3
+"217","3400",NA,NA,NA,"Normal",NA,NA,"Cognitive Complaint","Cognitive Complaint","Normal","MCI",5
+"218","3403",NA,NA,NA,"Normal","Normal",NA,NA,NA,"MCI","MCI",4
+"219","3423",NA,NA,NA,"Normal",NA,"Normal","Cognitive Complaint","Normal","MCI","MCI",5
+"220","3429",NA,NA,"Normal",NA,"Normal","Cognitive Complaint","Normal","MCI","MCI","MCI",6
+"221","3434",NA,"Cognitive Complaint","Normal","Normal","Normal","Normal","Normal","Cognitive Complaint","MCI","MCI",8
+"222","3435",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Cognitive Complaint","MCI","MCI",8
+"223","3444",NA,"Normal","Normal","Normal","Normal",NA,"MCI",NA,"MCI","MCI",6
+"224","3446",NA,"Normal","Normal","Normal","Normal","Normal","Normal","MCI",NA,"MCI",7
+"225","3451",NA,NA,"Normal","Cognitive Complaint","Normal","Normal","Normal","Normal",NA,"MCI",7
+"226","3467",NA,NA,"Normal","Normal","Normal","Normal","Normal","MCI",NA,"MCI",6
+"227","3530",NA,"MCI","Cognitive Complaint","MCI","Cognitive Complaint","MCI","Cognitive Complaint","Cognitive Complaint","MCI","MCI",8
+"228","3564",NA,NA,"Normal","MCI","Cognitive Complaint","Cognitive Complaint",NA,NA,"Cognitive Complaint","MCI",5
+"229","3660",NA,"Normal","MCI","Cognitive Complaint","MCI",NA,NA,NA,NA,"MCI",4
+"230","3757",NA,"MCI","Cognitive Complaint","Cognitive Complaint","MCI",NA,NA,NA,NA,"MCI",4
+"231","3758",NA,NA,"Cognitive Complaint","Cognitive Complaint","Cognitive Complaint","Cognitive Complaint","Cognitive Complaint","MCI","MCI","MCI",7
+"232","3781",NA,"Normal","Cognitive Complaint","Cognitive Complaint","Cognitive Complaint","Normal","MCI","MCI",NA,"MCI",7
+"233","3953",NA,"Normal","Normal","Normal","Normal","Normal","Normal","Normal","MCI","MCI",8
+"234","3957",NA,"Normal",NA,"MCI","MCI","MCI",NA,NA,NA,"MCI",4
+"235","4072",NA,NA,"Normal","Normal",NA,NA,NA,"MCI",NA,"MCI",3
+"236","4094",NA,NA,"Normal","Normal",NA,"MCI","MCI","MCI",NA,"MCI",5
+"237","4107","Normal",NA,NA,"Normal","MCI","MCI",NA,NA,NA,"MCI",4
+"238","4113","Normal",NA,"Normal","Normal","Normal","Normal","MCI",NA,NA,"MCI",6
+"239","4114",NA,NA,"MCI",NA,NA,NA,NA,NA,NA,"MCI",1
+"240","4121",NA,"Normal","MCI",NA,NA,NA,NA,NA,NA,"MCI",2
+"241","4124","Normal","Normal","Cognitive Complaint","Cognitive Complaint",NA,NA,"MCI",NA,NA,"MCI",5
+"242","4135","Normal","Cognitive Complaint",NA,"MCI",NA,NA,NA,NA,NA,"MCI",3
