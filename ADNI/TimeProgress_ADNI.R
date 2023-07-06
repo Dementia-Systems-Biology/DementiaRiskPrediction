@@ -1,0 +1,946 @@
+# Load packages
+library(tidyverse)
+library(caret)
+library(pROC)
+
+# Clear workspace and console
+rm(list = ls())
+cat("\014") 
+
+# Load data
+load("ADNI/predictedScore_factors_ADNI.RData")
+load("ADNI/MetaData_ADNI.RData")
+#load("~/ADNI/ADNI_metadata_classes_640.Rdata")
+
+# Filter for midlife samples
+metaData_fil <- as.data.frame(MetaData_baseline)
+rownames(metaData_fil) <- metaData_fil$Basename
+midlife_samples <- intersect(metaData_fil$Basename[metaData_fil$Age <= 75], 
+                             rownames(predictedScore_factors))
+metaData_fil <- metaData_fil[midlife_samples,]
+
+# Filter for MMSE
+metaData_fil <- metaData_fil[metaData_fil$MMSE.bl >= 26,]
+
+range(metaData_fil$Age)
+
+
+predictedScore_factors_fil <- predictedScore_factors[metaData_fil$Basename,]
+table(metaData_fil$DX)
+
+# All time
+metaData_fil_time <- MetaData_allTime[MetaData_allTime$RID %in% metaData_fil$RID,]
+
+
+# make predictions
+load("~/Data/Fit_EMIF_MCI_RF.RData")
+pred_RF <- predict(fit, predictedScore_factors_fil, type = "prob")
+
+predictDF <- data.frame(RID = metaData_fil$RID, 
+                        pred = pred_RF$MCI,
+                        Age = metaData_fil$Age)
+
+# Get mean prediction for same sample
+predictDF <- predictDF %>%
+  group_by(RID) %>%
+  reframe(RID = RID,
+          pred= mean(pred),
+          Age = Age)
+
+predictDF <- unique(predictDF)
+
+
+# Epi-MCI score as predictor
+predictDF$predClass <- "Intermediate risk"
+predictDF$predClass[predictDF$pred < quantile(predictDF$pred,0.33)] <- "Low risk"
+predictDF$predClass[predictDF$pred > quantile(predictDF$pred,0.67)] <- "High risk"
+table(predictDF$predClass)
+
+
+# Age as predictor
+predictDF$predClass <- "Intermediate risk"
+predictDF$predClass[predictDF$Age < quantile(predictDF$Age,0.33)] <- "Low risk"
+predictDF$predClass[predictDF$Age > quantile(predictDF$Age,0.67)] <- "High risk"
+table(predictDF$predClass)
+
+predictDF$predClass <- factor(predictDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
+p <- ggplot(predictDF) + 
+  geom_histogram(aes(x = log(pred/(1-pred)), fill = predClass),
+                 position = "identity",color = "black", bins= 40) +
+  theme_classic() +
+  xlab("Epi-MCI Score") +
+  ylab("Count") +
+  scale_fill_manual(values = c("#FDD0A2","#FD8D3C","#D94801")) +
+  theme(legend.position = "bottom",
+        legend.title = element_blank())
+
+ggsave(p, file = "ADNI/RiskScoreDistribution_ADNI.png", width = 7, height = 5)
+
+
+
+###############################################################################
+
+# MMSE
+
+###############################################################################
+
+var <- "MMSE"
+testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
+testDF <- testDF[!is.na(testDF$MMSE),]
+testDF <- testDF[testDF$MMSE < 24,]
+testDF$VISCODE[testDF$VISCODE == "bl"] <- 0
+testDF$Time <- as.numeric(str_remove(testDF$VISCODE, "m"))
+testDF$Time <- as.numeric(testDF$Time)
+testDF$Status <- ifelse((testDF$MMSE < 24), "Cognitive Impaired", "Normal")
+
+for (i in unique(testDF$RID)){
+  testDF[testDF$RID == i, "Time"] <- min(testDF[testDF$RID == i, "Time"])
+}
+
+testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
+normal <- data.frame(RID = setdiff(metaData_fil$RID[!is.na(metaData_fil[,var])], unique(testDF$RID)),
+                     VISCODE = "m85",
+                     MMSE = NA,
+                     Time = 85,
+                     Status = "Normal")
+testDF <- rbind.data.frame(testDF, normal)
+length(unique(testDF$RID))
+length(unique(metaData_fil_time$RID))
+
+
+kaplanDF <- testDF[,c("RID", "Time", "Status")]
+# 1: censored
+# 2: disease
+kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
+kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
+kaplanDF$Time <- kaplanDF$Time/12
+
+
+survdiff(Surv(Time, Test) ~ predClass, data = kaplanDF)
+
+
+kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
+p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>% 
+  ggsurvfit(size = 1.5) +
+  add_confidence_interval(alpha = 0.15) +
+  scale_color_manual(values = c("#FDD0A2","#FD8D3C","#D94801")) +
+  scale_fill_manual(values = c("#FDD0A2","#FD8D3C","#D94801")) +
+  theme_classic() +
+  ylab("Probability of\nnormal cognition") +
+  xlab("Follow-up time (years)") +
+  #scale_x_continuous(breaks = c(0,2,4,6,8)) +
+  ggtitle("MMSE") +
+  #xlim(c(0,8)) +
+  theme(legend.title = element_blank(),
+        legend.position = "bottom",
+        plot.title = element_text(hjust = 0.5,
+                                  face = "bold",
+                                  size = 16),
+        plot.subtitle = element_text(hjust = 0.5,
+                                     size = 10,
+                                     face = "italic"))
+
+ggsave(p, file = "KaplanMeier_ADNI_MMSE.png", width = 7, height = 5)
+
+kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
+kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
+survdiff(Surv(Time, Test) ~ predClass, 
+         data = kaplanDF1)
+
+coxph(Surv(Time, Test) ~ predClass, 
+      data = kaplanDF1) %>% 
+  tbl_regression(exp = TRUE) 
+
+
+
+###############################################################################
+
+# RAVLT learning
+
+###############################################################################
+
+var <- "RAVLT.learning"
+
+testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
+testDF <- testDF[!is.na(testDF[,var]),]
+
+sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var])
+mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var])
+
+testDF <- testDF[testDF[,var] < mean_var - 2*sd_var,]
+testDF$VISCODE[testDF$VISCODE == "bl"] <- 0
+testDF$Time <- as.numeric(str_remove(testDF$VISCODE, "m"))
+testDF$Time <- as.numeric(testDF$Time)
+testDF$Status <- ifelse((testDF[,var] < mean_var - 2*sd_var), "Cognitive Impaired", "Normal")
+
+for (i in unique(testDF$RID)){
+  testDF[testDF$RID == i, "Time"] <- min(testDF[testDF$RID == i, "Time"])
+}
+
+testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
+
+normal <- data.frame(RID = setdiff(metaData_fil$RID[!is.na(metaData_fil[,var])], unique(testDF$RID)),
+                     VISCODE = "m85",
+                     RAVLT.learning = NA,
+                     Time = 85,
+                     Status = "Normal")
+testDF <- rbind.data.frame(testDF, normal)
+length(unique(testDF$RID))
+length(unique(metaData_fil_time$RID))
+
+
+kaplanDF <- testDF[,c("RID", "Time", "Status")]
+# 1: censored
+# 2: disease
+kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
+kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
+kaplanDF$Time <- kaplanDF$Time/12
+
+
+survdiff(Surv(Time, Test) ~ predClass, data = kaplanDF)
+
+
+kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
+p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>% 
+  ggsurvfit(size = 1.5) +
+  add_confidence_interval(alpha = 0.15) +
+  scale_color_manual(values = c("#FDD0A2","#FD8D3C","#D94801")) +
+  scale_fill_manual(values = c("#FDD0A2","#FD8D3C","#D94801")) +
+  theme_classic() +
+  ylab("Probability of\nnormal cognition") +
+  xlab("Follow-up time (years)") +
+  #scale_x_continuous(breaks = c(0,2,4,6,8)) +
+  ggtitle("RAVLT (learning)") +
+  #xlim(c(0,8)) +
+  theme(legend.title = element_blank(),
+        legend.position = "bottom",
+        plot.title = element_text(hjust = 0.5,
+                                  face = "bold",
+                                  size = 16),
+        plot.subtitle = element_text(hjust = 0.5,
+                                     size = 10,
+                                     face = "italic"))
+
+ggsave(p, file = paste0("KaplanMeier_ADNI_",var,".png"), width = 7, height = 5)
+
+
+kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
+kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
+survdiff(Surv(Time, Test) ~ predClass, 
+         data = kaplanDF1)
+
+coxph(Surv(Time, Test) ~ predClass, 
+      data = kaplanDF1) %>% 
+  tbl_regression(exp = TRUE) 
+
+
+
+###############################################################################
+
+# RAVLT forgetting
+
+###############################################################################
+
+var <- "RAVLT.forgetting"
+
+testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
+testDF <- testDF[!is.na(testDF[,var]),]
+
+sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var])
+mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var])
+
+testDF <- testDF[testDF[,var] > mean_var + 2*sd_var,]
+testDF$VISCODE[testDF$VISCODE == "bl"] <- 0
+testDF$Time <- as.numeric(str_remove(testDF$VISCODE, "m"))
+testDF$Time <- as.numeric(testDF$Time)
+testDF$Status <- ifelse((testDF[,var] > mean_var + 2*sd_var), "Cognitive Impaired", "Normal")
+
+for (i in unique(testDF$RID)){
+  testDF[testDF$RID == i, "Time"] <- min(testDF[testDF$RID == i, "Time"])
+}
+
+testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
+normal <- data.frame(RID = setdiff(metaData_fil$RID[!is.na(metaData_fil[,var])], unique(testDF$RID)),
+                     VISCODE = "m85",
+                     RAVLT.forgetting = NA,
+                     Time = 85,
+                     Status = "Normal")
+testDF <- rbind.data.frame(testDF, normal)
+length(unique(testDF$RID))
+length(unique(metaData_fil_time$RID))
+
+
+kaplanDF <- testDF[,c("RID", "Time", "Status")]
+# 1: censored
+# 2: disease
+kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
+kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
+kaplanDF$Time <- kaplanDF$Time/12
+
+
+survdiff(Surv(Time, Test) ~ predClass, data = kaplanDF)
+
+
+kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
+p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>% 
+  ggsurvfit(size = 1.5) +
+  add_confidence_interval(alpha = 0.15) +
+  scale_color_manual(values = c("#FDD0A2","#FD8D3C","#D94801")) +
+  scale_fill_manual(values = c("#FDD0A2","#FD8D3C","#D94801")) +
+  theme_classic() +
+  ylab("Probability of\nnormal cognition") +
+  xlab("Follow-up time (years)") +
+  #scale_x_continuous(breaks = c(0,2,4,6,8)) +
+  ggtitle("RAVLT (forgetting)") +
+  #xlim(c(0,8)) +
+  theme(legend.title = element_blank(),
+        legend.position = "bottom",
+        plot.title = element_text(hjust = 0.5,
+                                  face = "bold",
+                                  size = 16),
+        plot.subtitle = element_text(hjust = 0.5,
+                                     size = 10,
+                                     face = "italic"))
+
+ggsave(p, file = paste0("KaplanMeier_ADNI_",var,".png"), width = 7, height = 5)
+
+kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
+kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
+survdiff(Surv(Time, Test) ~ predClass, 
+         data = kaplanDF1)
+
+coxph(Surv(Time, Test) ~ predClass, 
+      data = kaplanDF1) %>% 
+  tbl_regression(exp = TRUE) 
+
+###############################################################################
+
+# RAVLT percent forgetting
+
+###############################################################################
+
+var <- "RAVLT.perc.forgetting"
+
+testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
+testDF <- testDF[!is.na(testDF[,var]),]
+
+sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var])
+mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var])
+
+testDF <- testDF[testDF[,var] > mean_var + 2*sd_var,]
+testDF$VISCODE[testDF$VISCODE == "bl"] <- 0
+testDF$Time <- as.numeric(str_remove(testDF$VISCODE, "m"))
+testDF$Time <- as.numeric(testDF$Time)
+testDF$Status <- ifelse((testDF[,var] > mean_var + 2*sd_var), "Cognitive Impaired", "Normal")
+
+for (i in unique(testDF$RID)){
+  testDF[testDF$RID == i, "Time"] <- min(testDF[testDF$RID == i, "Time"])
+}
+
+testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
+normal <- data.frame(RID = setdiff(metaData_fil$RID[!is.na(metaData_fil[,var])], unique(testDF$RID)),
+                     VISCODE = "m85",
+                     RAVLT.perc.forgetting = NA,
+                     Time = 85,
+                     Status = "Normal")
+testDF <- rbind.data.frame(testDF, normal)
+length(unique(testDF$RID))
+length(unique(metaData_fil_time$RID))
+
+
+kaplanDF <- testDF[,c("RID", "Time", "Status")]
+# 1: censored
+# 2: disease
+kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
+kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
+kaplanDF$Time <- kaplanDF$Time/12
+
+
+survdiff(Surv(Time, Test) ~ predClass, data = kaplanDF)
+
+
+kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
+p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>% 
+  ggsurvfit(size = 1.5) +
+  add_confidence_interval(alpha = 0.15) +
+  scale_color_manual(values = c("#FDD0A2","#FD8D3C","#D94801")) +
+  scale_fill_manual(values = c("#FDD0A2","#FD8D3C","#D94801")) +
+  theme_classic() +
+  ylab("Probability of\nnormal cognition") +
+  xlab("Follow-up time (years)") +
+  #scale_x_continuous(breaks = c(0,2,4,6,8)) +
+  ggtitle("RAVLT (percent forgetting)") +
+  #xlim(c(0,8)) +
+  theme(legend.title = element_blank(),
+        legend.position = "bottom",
+        plot.title = element_text(hjust = 0.5,
+                                  face = "bold",
+                                  size = 16),
+        plot.subtitle = element_text(hjust = 0.5,
+                                     size = 10,
+                                     face = "italic"))
+
+ggsave(p, file = paste0("KaplanMeier_ADNI_",var,".png"), width = 7, height = 5)
+
+kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
+kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
+survdiff(Surv(Time, Test) ~ predClass, 
+         data = kaplanDF1)
+
+coxph(Surv(Time, Test) ~ predClass, 
+      data = kaplanDF1) %>% 
+  tbl_regression(exp = TRUE) 
+
+
+###############################################################################
+
+# RAVLT immediate
+
+###############################################################################
+
+var <- "RAVLT.immediate"
+
+testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
+testDF <- testDF[!is.na(testDF[,var]),]
+
+sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var])
+mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var])
+
+testDF <- testDF[testDF[,var] < mean_var - 2*sd_var,]
+testDF$VISCODE[testDF$VISCODE == "bl"] <- 0
+testDF$Time <- as.numeric(str_remove(testDF$VISCODE, "m"))
+testDF$Time <- as.numeric(testDF$Time)
+testDF$Status <- ifelse((testDF[,var] < mean_var - 2*sd_var), "Cognitive Impaired", "Normal")
+
+for (i in unique(testDF$RID)){
+  testDF[testDF$RID == i, "Time"] <- min(testDF[testDF$RID == i, "Time"])
+}
+
+testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
+normal <- data.frame(RID = setdiff(metaData_fil$RID[!is.na(metaData_fil[,var])], unique(testDF$RID)),
+                     VISCODE = "m85",
+                     RAVLT.immediate = NA,
+                     Time = 85,
+                     Status = "Normal")
+testDF <- rbind.data.frame(testDF, normal)
+length(unique(testDF$RID))
+length(unique(metaData_fil_time$RID))
+
+
+kaplanDF <- testDF[,c("RID", "Time", "Status")]
+# 1: censored
+# 2: disease
+kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
+kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
+kaplanDF$Time <- kaplanDF$Time/12
+
+
+survdiff(Surv(Time, Test) ~ predClass, data = kaplanDF)
+
+
+kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
+p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>% 
+  ggsurvfit(size = 1.5) +
+  add_confidence_interval(alpha = 0.15) +
+  scale_color_manual(values = c("#FDD0A2","#FD8D3C","#D94801")) +
+  scale_fill_manual(values = c("#FDD0A2","#FD8D3C","#D94801")) +
+  theme_classic() +
+  ylab("Probability of\nnormal cognition") +
+  xlab("Follow-up time (years)") +
+  #scale_x_continuous(breaks = c(0,2,4,6,8)) +
+  ggtitle("RAVLT (immediate)") +
+  #xlim(c(0,8)) +
+  theme(legend.title = element_blank(),
+        legend.position = "bottom",
+        plot.title = element_text(hjust = 0.5,
+                                  face = "bold",
+                                  size = 16),
+        plot.subtitle = element_text(hjust = 0.5,
+                                     size = 10,
+                                     face = "italic"))
+
+ggsave(p, file = paste0("KaplanMeier_ADNI_",var,".png"), width = 7, height = 5)
+
+
+kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
+kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
+survdiff(Surv(Time, Test) ~ predClass, 
+         data = kaplanDF1)
+
+coxph(Surv(Time, Test) ~ predClass, 
+      data = kaplanDF1) %>% 
+  tbl_regression(exp = TRUE) 
+
+###############################################################################
+
+# ADASQ4
+
+###############################################################################
+
+var <- "ADASQ4"
+
+testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
+testDF <- testDF[!is.na(testDF[,var]),]
+
+sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var])
+mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var])
+
+testDF <- testDF[testDF[,var] > mean_var + 2*sd_var,]
+testDF$VISCODE[testDF$VISCODE == "bl"] <- 0
+testDF$Time <- as.numeric(str_remove(testDF$VISCODE, "m"))
+testDF$Time <- as.numeric(testDF$Time)
+testDF$Status <- ifelse((testDF[,var] > mean_var + 2*sd_var), "Cognitive Impaired", "Normal")
+
+for (i in unique(testDF$RID)){
+  testDF[testDF$RID == i, "Time"] <- min(testDF[testDF$RID == i, "Time"])
+}
+
+testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
+normal <- data.frame(RID = setdiff(metaData_fil$RID[!is.na(metaData_fil[,var])], unique(testDF$RID)),
+                     VISCODE = "m85",
+                     ADASQ4 = NA,
+                     Time = 85,
+                     Status = "Normal")
+testDF <- rbind.data.frame(testDF, normal)
+length(unique(testDF$RID))
+length(unique(metaData_fil_time$RID))
+
+
+kaplanDF <- testDF[,c("RID", "Time", "Status")]
+# 1: censored
+# 2: disease
+kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
+kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
+kaplanDF$Time <- kaplanDF$Time/12
+
+
+survdiff(Surv(Time, Test) ~ predClass, data = kaplanDF)
+
+
+kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
+p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>% 
+  ggsurvfit(size = 1.5) +
+  add_confidence_interval(alpha = 0.15) +
+  scale_color_manual(values = c("#FDD0A2","#FD8D3C","#D94801")) +
+  scale_fill_manual(values = c("#FDD0A2","#FD8D3C","#D94801")) +
+  theme_classic() +
+  ylab("Probability of\nnormal cognition") +
+  xlab("Follow-up time (years)") +
+  #scale_x_continuous(breaks = c(0,2,4,6,8)) +
+  ggtitle(var) +
+  #xlim(c(0,8)) +
+  theme(legend.title = element_blank(),
+        legend.position = "bottom",
+        plot.title = element_text(hjust = 0.5,
+                                  face = "bold",
+                                  size = 16),
+        plot.subtitle = element_text(hjust = 0.5,
+                                     size = 10,
+                                     face = "italic"))
+
+ggsave(p, file = paste0("KaplanMeier_ADNI_",var,".png"), width = 7, height = 5)
+
+
+kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
+kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
+survdiff(Surv(Time, Test) ~ predClass, 
+         data = kaplanDF1)
+
+coxph(Surv(Time, Test) ~ predClass, 
+      data = kaplanDF1) %>% 
+  tbl_regression(exp = TRUE) 
+
+###############################################################################
+
+# ADAS13
+
+###############################################################################
+
+var <- "ADAS13"
+
+testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
+testDF <- testDF[!is.na(testDF[,var]),]
+
+sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var])
+mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var])
+
+testDF <- testDF[testDF[,var] > mean_var + 2*sd_var,]
+testDF$VISCODE[testDF$VISCODE == "bl"] <- 0
+testDF$Time <- as.numeric(str_remove(testDF$VISCODE, "m"))
+testDF$Time <- as.numeric(testDF$Time)
+testDF$Status <- ifelse((testDF[,var] > mean_var + 2*sd_var), "Cognitive Impaired", "Normal")
+
+for (i in unique(testDF$RID)){
+  testDF[testDF$RID == i, "Time"] <- min(testDF[testDF$RID == i, "Time"])
+}
+
+testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
+normal <- data.frame(RID = setdiff(metaData_fil$RID[!is.na(metaData_fil[,var])], unique(testDF$RID)),
+                     VISCODE = "m85",
+                     ADAS13 = NA,
+                     Time = 85,
+                     Status = "Normal")
+testDF <- rbind.data.frame(testDF, normal)
+length(unique(testDF$RID))
+length(unique(metaData_fil_time$RID))
+
+
+kaplanDF <- testDF[,c("RID", "Time", "Status")]
+# 1: censored
+# 2: disease
+kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
+kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
+kaplanDF$Time <- kaplanDF$Time/12
+
+
+survdiff(Surv(Time, Test) ~ predClass, data = kaplanDF)
+
+
+kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
+p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>% 
+  ggsurvfit(size = 1.5) +
+  add_confidence_interval(alpha = 0.15) +
+  scale_color_manual(values = c("#FDD0A2","#FD8D3C","#D94801")) +
+  scale_fill_manual(values = c("#FDD0A2","#FD8D3C","#D94801")) +
+  theme_classic() +
+  ylab("Probability of\nnormal cognition") +
+  xlab("Follow-up time (years)") +
+  #scale_x_continuous(breaks = c(0,2,4,6,8)) +
+  ggtitle(var) +
+  #xlim(c(0,8)) +
+  theme(legend.title = element_blank(),
+        legend.position = "bottom",
+        plot.title = element_text(hjust = 0.5,
+                                  face = "bold",
+                                  size = 16),
+        plot.subtitle = element_text(hjust = 0.5,
+                                     size = 10,
+                                     face = "italic"))
+
+ggsave(p, file = paste0("KaplanMeier_ADNI_",var,".png"), width = 7, height = 5)
+
+kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
+kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
+survdiff(Surv(Time, Test) ~ predClass, 
+         data = kaplanDF1)
+
+coxph(Surv(Time, Test) ~ predClass, 
+      data = kaplanDF1) %>% 
+  tbl_regression(exp = TRUE) 
+
+
+###############################################################################
+
+# ADAS11
+
+###############################################################################
+
+var <- "ADAS11"
+
+testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
+testDF <- testDF[!is.na(testDF[,var]),]
+
+sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var])
+mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var])
+
+testDF <- testDF[testDF[,var] > mean_var + 2*sd_var,]
+testDF$VISCODE[testDF$VISCODE == "bl"] <- 0
+testDF$Time <- as.numeric(str_remove(testDF$VISCODE, "m"))
+testDF$Time <- as.numeric(testDF$Time)
+testDF$Status <- ifelse((testDF[,var] > mean_var + 2*sd_var), "Cognitive Impaired", "Normal")
+
+for (i in unique(testDF$RID)){
+  testDF[testDF$RID == i, "Time"] <- min(testDF[testDF$RID == i, "Time"])
+}
+
+testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
+normal <- data.frame(RID = setdiff(metaData_fil$RID[!is.na(metaData_fil[,var])], unique(testDF$RID)),
+                     VISCODE = "m85",
+                     ADAS11 = NA,
+                     Time = max(testDF$Time) + 1,
+                     Status = "Normal")
+testDF <- rbind.data.frame(testDF, normal)
+length(unique(testDF$RID))
+length(unique(metaData_fil_time$RID))
+
+
+kaplanDF <- testDF[,c("RID", "Time", "Status")]
+# 1: censored
+# 2: disease
+kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
+kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
+kaplanDF$Time <- kaplanDF$Time/12
+
+
+survdiff(Surv(Time, Test) ~ predClass, data = kaplanDF)
+
+
+kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
+p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>% 
+  ggsurvfit(size = 1.5) +
+  add_confidence_interval(alpha = 0.15) +
+  scale_color_manual(values = c("#FDD0A2","#FD8D3C","#D94801")) +
+  scale_fill_manual(values = c("#FDD0A2","#FD8D3C","#D94801")) +
+  theme_classic() +
+  ylab("Probability of\nnormal cognition") +
+  xlab("Follow-up time (years)") +
+  #scale_x_continuous(breaks = c(0,2,4,6,8)) +
+  ggtitle(var) +
+  #xlim(c(0,8)) +
+  theme(legend.title = element_blank(),
+        legend.position = "bottom",
+        plot.title = element_text(hjust = 0.5,
+                                  face = "bold",
+                                  size = 16),
+        plot.subtitle = element_text(hjust = 0.5,
+                                     size = 10,
+                                     face = "italic"))
+
+ggsave(p, file = paste0("KaplanMeier_ADNI_",var,".png"), width = 7, height = 5)
+
+kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
+kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
+survdiff(Surv(Time, Test) ~ predClass, 
+         data = kaplanDF1)
+
+coxph(Surv(Time, Test) ~ predClass, 
+      data = kaplanDF1) %>% 
+  tbl_regression(exp = TRUE) 
+
+###############################################################################
+
+# LDELTOTAL
+
+###############################################################################
+
+var <- "LDELTOTAL"
+
+testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
+testDF <- testDF[!is.na(testDF[,var]),]
+
+sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var])
+mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var])
+
+testDF <- testDF[testDF[,var] < mean_var - 2*sd_var,]
+testDF$VISCODE[testDF$VISCODE == "bl"] <- 0
+testDF$Time <- as.numeric(str_remove(testDF$VISCODE, "m"))
+testDF$Time <- as.numeric(testDF$Time)
+testDF$Status <- ifelse((testDF[,var] < mean_var - 2*sd_var), "Cognitive Impaired", "Normal")
+
+for (i in unique(testDF$RID)){
+  testDF[testDF$RID == i, "Time"] <- min(testDF[testDF$RID == i, "Time"])
+}
+
+testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
+normal <- data.frame(RID = setdiff(metaData_fil$RID[!is.na(metaData_fil[,var])], unique(testDF$RID)),
+                     VISCODE = "m85",
+                     LDELTOTAL = NA,
+                     Time = max(testDF$Time) + 1,
+                     Status = "Normal")
+testDF <- rbind.data.frame(testDF, normal)
+length(unique(testDF$RID))
+length(unique(metaData_fil_time$RID))
+
+
+kaplanDF <- testDF[,c("RID", "Time", "Status")]
+# 1: censored
+# 2: disease
+kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
+kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
+kaplanDF$Time <- kaplanDF$Time/12
+
+
+survdiff(Surv(Time, Test) ~ predClass, data = kaplanDF)
+
+
+kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
+p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>% 
+  ggsurvfit(size = 1.5) +
+  add_confidence_interval(alpha = 0.15) +
+  scale_color_manual(values = c("#FDD0A2","#FD8D3C","#D94801")) +
+  scale_fill_manual(values = c("#FDD0A2","#FD8D3C","#D94801")) +
+  theme_classic() +
+  ylab("Probability of\nnormal cognition") +
+  xlab("Follow-up time (years)") +
+  #scale_x_continuous(breaks = c(0,2,4,6,8)) +
+  ggtitle("Logical Memory - Delayed Recall") +
+  #xlim(c(0,8)) +
+  theme(legend.title = element_blank(),
+        legend.position = "bottom",
+        plot.title = element_text(hjust = 0.5,
+                                  face = "bold",
+                                  size = 16),
+        plot.subtitle = element_text(hjust = 0.5,
+                                     size = 10,
+                                     face = "italic"))
+
+ggsave(p, file = paste0("KaplanMeier_ADNI_",var,".png"), width = 7, height = 5)
+
+kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
+kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
+survdiff(Surv(Time, Test) ~ predClass, 
+         data = kaplanDF1)
+
+coxph(Surv(Time, Test) ~ predClass, 
+      data = kaplanDF1) %>% 
+  tbl_regression(exp = TRUE) 
+
+
+###############################################################################
+
+# DIGITSCOR: Digit Symbol Substitution
+
+###############################################################################
+
+# DOES NOT WORK
+var <- "DIGITSCOR"
+
+testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
+testDF <- testDF[!is.na(testDF[,var]),]
+
+sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var])
+mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var])
+
+testDF <- testDF[testDF[,var] < mean_var - 2*sd_var,]
+testDF$VISCODE[testDF$VISCODE == "bl"] <- 0
+testDF$Time <- as.numeric(str_remove(testDF$VISCODE, "m"))
+testDF$Time <- as.numeric(testDF$Time)
+testDF$Status <- ifelse((testDF[,var] < mean_var - 2*sd_var), "Cognitive Impaired", "Normal")
+
+for (i in unique(testDF$RID)){
+  testDF[testDF$RID == i, "Time"] <- min(testDF[testDF$RID == i, "Time"])
+}
+
+testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
+normal <- data.frame(RID = setdiff(metaData_fil$RID[!is.na(metaData_fil[,var])], unique(testDF$RID)),
+                     VISCODE = "m85",
+                     DIGITSCOR = NA,
+                     Time = max(testDF$Time) + 1,
+                     Status = "Normal")
+testDF <- rbind.data.frame(testDF, normal)
+length(unique(testDF$RID))
+length(unique(metaData_fil_time$RID))
+
+
+kaplanDF <- testDF[,c("RID", "Time", "Status")]
+# 1: censored
+# 2: disease
+kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
+kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
+kaplanDF$Time <- kaplanDF$Time/12
+
+
+survdiff(Surv(Time, Test) ~ predClass, data = kaplanDF)
+
+
+kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
+p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>% 
+  ggsurvfit(size = 1.5) +
+  add_confidence_interval(alpha = 0.15) +
+  scale_color_manual(values = c("#FDD0A2","#FD8D3C","#D94801")) +
+  scale_fill_manual(values = c("#FDD0A2","#FD8D3C","#D94801")) +
+  theme_classic() +
+  ylab("Probability of\nnormal cognition") +
+  xlab("Follow-up time (years)") +
+  #scale_x_continuous(breaks = c(0,2,4,6,8)) +
+  ggtitle("Logical Memory - Delayed Recall") +
+  #xlim(c(0,8)) +
+  theme(legend.title = element_blank(),
+        legend.position = "bottom",
+        plot.title = element_text(hjust = 0.5,
+                                  face = "bold",
+                                  size = 16),
+        plot.subtitle = element_text(hjust = 0.5,
+                                     size = 10,
+                                     face = "italic"))
+
+ggsave(p, file = paste0("KaplanMeier_ADNI_",var,".png"), width = 7, height = 5)
+
+kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
+kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
+survdiff(Surv(Time, Test) ~ predClass, 
+         data = kaplanDF1)
+
+coxph(Surv(Time, Test) ~ predClass, 
+      data = kaplanDF1) %>% 
+  tbl_regression(exp = TRUE) 
+
+###############################################################################
+
+# TRABSCOR: Trails B
+
+###############################################################################
+
+var <- "TRABSCOR"
+
+testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
+testDF <- testDF[!is.na(testDF[,var]),]
+
+sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var], na.rm = TRUE)
+mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var], na.rm = TRUE)
+
+testDF <- testDF[testDF[,var] > mean_var + 2*sd_var,]
+testDF$VISCODE[testDF$VISCODE == "bl"] <- 0
+testDF$Time <- as.numeric(str_remove(testDF$VISCODE, "m"))
+testDF$Time <- as.numeric(testDF$Time)
+testDF$Status <- ifelse((testDF[,var] > mean_var + 2*sd_var), "Cognitive Impaired", "Normal")
+
+for (i in unique(testDF$RID)){
+  testDF[testDF$RID == i, "Time"] <- min(testDF[testDF$RID == i, "Time"])
+}
+
+testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
+normal <- data.frame(RID = setdiff(metaData_fil$RID[!is.na(metaData_fil[,var])], unique(testDF$RID)),
+                     VISCODE = "m85",
+                     TRABSCOR = NA,
+                     Time = max(testDF$Time) + 1,
+                     Status = "Normal")
+testDF <- rbind.data.frame(testDF, normal)
+length(unique(testDF$RID))
+length(unique(metaData_fil_time$RID))
+
+
+kaplanDF <- testDF[,c("RID", "Time", "Status")]
+# 1: censored
+# 2: disease
+kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
+kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
+kaplanDF$Time <- kaplanDF$Time/12
+
+
+survdiff(Surv(Time, Test) ~ predClass, data = kaplanDF)
+
+
+kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
+p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>% 
+  ggsurvfit(size = 1.5) +
+  add_confidence_interval(alpha = 0.15) +
+  scale_color_manual(values = c("#FDD0A2","#FD8D3C","#D94801")) +
+  scale_fill_manual(values = c("#FDD0A2","#FD8D3C","#D94801")) +
+  theme_classic() +
+  ylab("Probability of\nnormal cognition") +
+  xlab("Follow-up time (years)") +
+  #scale_x_continuous(breaks = c(0,2,4,6,8)) +
+  ggtitle("Trail Making Test Part B Time") +
+  #xlim(c(0,8)) +
+  theme(legend.title = element_blank(),
+        legend.position = "bottom",
+        plot.title = element_text(hjust = 0.5,
+                                  face = "bold",
+                                  size = 16),
+        plot.subtitle = element_text(hjust = 0.5,
+                                     size = 10,
+                                     face = "italic"))
+
+ggsave(p, file = paste0("KaplanMeier_ADNI_",var,".png"), width = 7, height = 5)
+
+kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
+kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
+survdiff(Surv(Time, Test) ~ predClass, 
+         data = kaplanDF1)
+
+coxph(Surv(Time, Test) ~ predClass, 
+      data = kaplanDF1) %>% 
+  tbl_regression(exp = TRUE) 
+
+
