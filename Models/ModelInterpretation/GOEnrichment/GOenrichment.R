@@ -3,6 +3,7 @@ library(caret)
 library(glmnet)
 #BiocManager::install("missMethyl")
 library(missMethyl)
+library(rrvgo)
 
 # Function to capitalize first letter
 firstup <- function(x) {
@@ -67,21 +68,53 @@ for (i in 1:length(selCpGs)){
 pvalues <- as.data.frame(pvalues)
 FDRs <- as.data.frame(FDRs)
 colnames(pvalues) <-  names(selCpGs)
-rownames(pvalues) <- firstup(paste0(gst$TERM, " (", gst$ONTOLOGY, ")"))
+rownames(pvalues) <- firstup(paste0(gst$TERM, " (", rownames(gst), ")"))
 colnames(FDRs) <- names(selCpGs)
-rownames(FDRs) <- firstup(paste0(gst$TERM, " (", gst$ONTOLOGY, ")"))
+rownames(FDRs) <- firstup(paste0(gst$TERM, " (", rownames(gst), ")"))
 save(FDRs, file = "FDRs_GO.RData")
 save(pvalues, file = "pvalues_GO.RData")
 save(gst, file = "gst_GO.RData")
 
+# Select BP only
+load("gst_GO.RData")
+gst_bp <- gst[gst$ONTOLOGY == "BP",]
+
+
+
+simMatrix_BP <- calculateSimMatrix(rownames(gst_bp),
+                                   orgdb = "org.Hs.eg.db",
+                                   ont = "BP", 
+                                   method = "Rel")
+
+
+pvalues_id <- pvalues
+rownames(pvalues_id) <- rownames(gst)
+pvalues_id <- pvalues_id[rownames(gst_bp),]
+reduceTerms_BP <- reduceSimMatrix(simMatrix_BP,
+                                  rowMeans(-log(pvalues_id)),
+                                  threshold = 0.7,
+                                  orgdb = "org.Hs.eg.db")
+
 
 load("pvalues_GO.RData")
-rownames(pvalues)[rowSums(pvalues < 0.05) > 2]
+sel_terms <- firstup(paste0(gst_bp$TERM, " (", rownames(gst_bp), ")"))
+sel_terms <- firstup(paste0(reduceTerms_BP$parentTerm, " (", reduceTerms_BP$parent, ")"))
+sel_pvalues <- pvalues[rownames(pvalues) %in% sel_terms,]
+
+
+rownames(sel_pvalues)[rowSums(sel_pvalues < 0.05) > 2]
+
+
+
+
+
+
+
 rownames(pvalues)[which.max(rowSums(-log(pvalues)))]
 
 
 # Which terms reach significance in more than 3 models?
-test <- pvalues[rowSums(pvalues < 0.1) > 3,]
+test <- sel_pvalues[rowSums(sel_pvalues < 0.05) > 2,]
 terms <- gst[rownames(test),]
 colnames(test) <- c("Systolic Blood Pressure", "Low education", "Physical Inactivity",
                     "Unhealthy diet", "Depression", "Type II Diabetes", "Sex", "Age",
@@ -90,7 +123,7 @@ colnames(test) <- c("Systolic Blood Pressure", "Low education", "Physical Inacti
 # Prepare data for plotting
 plotDF <- gather(test)
 plotDF$Name <- rep(rownames(test), ncol(test))
-plotDF$Sig <- ifelse(plotDF$value < 0.01, "Yes", "No")
+plotDF$Sig <- ifelse(plotDF$value < 0.05, "Yes", "No")
 
 # Perform hierarchical clustering on the terms
 clusters <- hclust(dist(-log(test)), method = "ward.D2")
@@ -113,17 +146,75 @@ p <- ggplot(plotDF) +
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
         legend.position = "right")
 
-
+ggsave(p, file = "GOenrichment_heatmap.png", width = 10, height = 7)
 
 cpgs_models <- unique(unlist(selCpGs))
+set.seed(123)
 gst <- gometh(sig.cpg=cpgs_models, all.cpg=allCpGs, collection="GO",
               array.type = "EPIC",
-              plot.bias=TRUE)
-save(gst, file =  "gst_modelCombined_GO.RData")
+              plot.bias=TRUE,
+              sig.genes = TRUE)
+save(gst, file =  "gst_modelCombined_GO_new.RData")
 
-gst <- gometh(sig.cpg=cpgs_models, all.cpg=allCpGs, collection="KEGG",
-              array.type = "EPIC",
-              plot.bias=TRUE)
-save(gst, file =  "gst_modelCombined_KEGG.RData")
 
 pvalues_models <- gst$P.DE
+
+
+table(unlist(selCpGs))[which(table(unlist(selCpGs))>1)]
+
+
+
+# Exlude X and Y chromosomal proteins
+ensembl=useMart("ensembl")
+ensembl = useDataset("hsapiens_gene_ensembl",mart=ensembl)
+
+#biomaRt::listAttributes(ensembl)
+annotations <- getBM(attributes=c("ensembl_gene_id",
+                                  "hgnc_symbol",
+                                  "chromosome_name",
+                                  "go_id",
+                                  "name_1006"), 
+                     filters = 'go',
+                     values = "GO:0097113",
+                     mart = ensembl)
+
+annotations <- annotations[annotations$go_id == "GO:0097113",]
+
+
+load("~/Data/probe_annotation.RData")
+load("selCpGs.RData")
+load("~/Data/Probe2Gene_final_ann.RData")
+
+genes <- str_split(gst["GO:0097113", "SigGenesInSet"], ",")[[1]]
+
+ann_fil <- Probe2Gene_final[Probe2Gene_final$Gene %in% genes,]
+ann_fil <- ann_fil[ann_fil$Association != "Intergenic",]
+ann_fil <- ann_fil[ann_fil$Association != "ExonBnd",]
+
+selCPG_names <- c("Systolic Blood Pressure", "Low education", "Physical Inactivity",
+                  "Unhealthy diet", "Depression", "Type II Diabetes", "Sex", "Age",
+                  "L-M Alcohol Intake","HDL Cholesterol")
+AssociatedGenes <- NULL
+for (i in 1:length(selCpGs)){
+  AssociatedGenes_i <- ann_fil[ann_fil$CpG %in% selCpGs[[i]],]
+  if (nrow(AssociatedGenes_i) != 0){
+    AssociatedGenes_i$Model <- selCPG_names[i]
+    AssociatedGenes <- rbind.data.frame(AssociatedGenes, AssociatedGenes_i)
+  }
+}
+
+
+p <- ggplot(AssociatedGenes)+
+  geom_tile(aes(x = CpG, y = Model, fill = Association)) +
+  facet_grid(cols = vars(Gene), scales = "free", space = "free") +
+  scale_fill_brewer(palette = "Dark2") +
+  xlab("") +
+  ylab("") +
+  ggtitle("AMPA glutamate receptor clustering (GO:0097113)") +
+  theme_bw() +
+  theme(legend.position = "bottom",
+        legend.title = element_blank(),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        plot.title = element_text(face = "bold", size = 14, hjust = 0.5))
+
+ggsave(p, file = "AMPAclustering.png", width = 8, height = 5)

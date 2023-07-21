@@ -1,0 +1,140 @@
+# Clear workspace and console
+rm(list = ls())
+cat("\014") 
+
+# Load packages
+library(coloc)
+library(data.table)
+library(httr)
+library(ggrepel)
+
+# Load GWAS summary statistics
+AD_summary <- fread("Data/ADFamilyHistory_2019_84.txt")
+AD_summary <- as.data.frame(AD_summary)
+rownames(AD_summary) <- AD_summary$SNP
+
+# Get CpGs of each model
+load("~/selCpGs.RData")
+
+results_all <- NULL
+# For each model...
+for (i in 6:length(selCpGs)){
+  
+  # Get the included CpGs
+  selCpGs1 <- selCpGs[[i]]
+  
+  # Get the mQTLs
+  query <- list(
+    cpgs = selCpGs1,
+    pval = 1e-5,
+    cistrans = "cis",
+    clumped = 0
+  )
+  res <- POST("http://api.godmc.org.uk/v0.1/query", body = query, encode = "json")
+  test_all <- content(res) %>% lapply(., as_data_frame) %>% bind_rows
+  
+  # For each CpG...
+  selCpGs1 <- unique(test_all$cpg)
+  for (cpg in 1:length(selCpGs1)){
+    
+    # Get mQTL information for single CpG
+    test <- as.data.frame(test_all[test_all$cpg == selCpGs1[cpg],])
+    
+    # Get common SNPS with GWAS data
+    common_snps <- intersect(test$rsid,AD_summary$SNP)
+    
+    # Select common SNPs only (mQTL data)
+    test <- test[test$rsid != "",]
+    rownames(test) <- test$rsid
+    test <- test[common_snps,]
+    
+    # Prepare mQTL data
+    coloc_data_mQTL <- list(beta = test$beta_a1,
+                            varbeta = test$se^2,
+                            snp = test$rsid,
+                            position = str_remove(str_remove(str_remove(test$name, ":SNP"),"chr.*:"), ":"),
+                            type = "quant",
+                            N = test$samplesize,
+                            MAF = ifelse(test$freq_a1 < 0.5, test$freq_a1, 1-test$freq_a1))
+    
+    
+    
+    # Select common SNPs only (GWAS data)
+    AD_summary_fil <- AD_summary[common_snps,]
+    
+    # Prepare GWAS data
+    coloc_data_GWAS <- list(beta = AD_summary_fil$BETA,
+                            varbeta = AD_summary_fil$SE^2,
+                            snp = AD_summary_fil$SNP,
+                            position = AD_summary_fil$BP,
+                            type = "cc")
+    
+    # If # common SNPS > 0
+    if (length(common_snps) > 0){
+      
+      # Perform coloc analysis
+      my.res <- coloc.abf(dataset1=coloc_data_GWAS,
+                          dataset2=coloc_data_mQTL)
+      
+      # Save summary statistics
+      results_cpg <- as.data.frame(t(as.data.frame(my.res$summary)))
+      results_cpg$CpG <- selCpGs1[cpg]
+      results_cpg$Model <- names(selCpGs)[i]
+      rownames(results_cpg) <- NULL
+      
+      # Combine with previous results
+      results_all <- rbind.data.frame(results_all, results_cpg)
+    }
+  }
+}
+save(results_all, file = "coloc_results1.RData")
+
+
+results_all$Model[results_all$Model == "Alcohol"] <- "Alcohol consumption"
+results_all$Model[results_all$Model == "Depression"] <- "Depression"
+results_all$Model[results_all$Model == "Diabetes"] <- "Type II diabetes"
+results_all$Model[results_all$Model == "Diet"] <- "Unhealthy diet"
+results_all$Model[results_all$Model == "Education"] <- "Low education"
+results_all$Model[results_all$Model == "EpiAge"] <- "Age"
+results_all$Model[results_all$Model == "HDL"] <- "HDL cholesterol"
+results_all$Model[results_all$Model == "Physical"] <- "Phsyical inactivity"
+results_all$Model[results_all$Model == "SexMale"] <- "Sex"
+results_all$Model[results_all$Model == "SysBP"] <- "Syst. blood pressure"
+
+load("~/Data/Probe2Gene_final_ann.RData")
+
+Probe2Gene <- Probe2Gene_final %>%
+  group_by(CpG) %>%
+  summarise(CpG = CpG,
+            Genes = paste0(Gene))
+
+Probe2Gene <- Probe2Gene[!duplicated(Probe2Gene),]
+results_all_ann <- left_join(results_all, Probe2Gene,
+                              by = c("CpG" = "CpG"))
+
+set.seed(456)
+p <- ggplot(results_all) +
+  geom_jitter(aes(x = Model, y = `PP.H4.abf`, color = Model), width = 0.3) +
+  geom_text_repel(data = results_all_ann[results_all_ann$PP.H4.abf > 0.75,],
+                  aes(x = Model, y = `PP.H4.abf`, 
+                      label = paste0(CpG, " (",Genes, ")")),
+                  size = 3, color = "#737373", fontface = "italic") + 
+  ylab("Posterior probability\nfor shared genetic variant") +
+  xlab(NULL) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none") +
+  scale_color_manual(values = rep(c("#FB6A4A","#CB181D"),6))
+
+
+ggsave(p, file = "Coloc_results.png", width = 8, height = 5)
+
+check_dataset(coloc_data_GWAS,warn.minp=1e-10)
+
+
+
+
+
+
+
+selSNPs <- unique(str_remove(str_remove(str_remove(test$name, "chr"), ":SNP"), ":INDEL"))
