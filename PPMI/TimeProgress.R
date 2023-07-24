@@ -63,18 +63,32 @@ predictedScore_factors_fil <- predictedScore_factors_fil[test$Basename,]
 # make predictions
 load("~/Data/Fit_EMIF_MCI_RF.RData")
 pred_RF <- predict(fit, predictedScore_factors_fil, type = "prob")
-
 predictDF <- data.frame(PATNO = test$PATNO, 
                         pred = pred_RF$MCI)
 
 
+# Split into three classes
 predictDF$predClass <- "Intermediate risk"
 predictDF$predClass[predictDF$pred < quantile(predictDF$pred,0.33)] <- "Low risk"
 predictDF$predClass[predictDF$pred > quantile(predictDF$pred,0.67)] <- "High risk"
 table(predictDF$predClass)
 
+# Make histogram of scores
+predictDF$predClass <- factor(predictDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
+p <- ggplot(predictDF) + 
+  geom_histogram(aes(x = log(pred/(1-pred)), fill = predClass),
+                 position = "identity",color = "black", bins= 30) +
+  theme_classic() +
+  xlab("Epi-MCI Score") +
+  ylab("Count") +
+  scale_fill_manual(values = c("#FDD0A2","#FD8D3C","#D94801")) +
+  theme(legend.position = "bottom",
+        legend.title = element_blank())
+
+ggsave(p, file = "PPMI/RiskScoreDistribution.png", width = 7, height = 5)
 
 
+# Prepare data into correct format for survival analysis
 testDF <- gather(as.data.frame(cogcat[,3:11]))
 testDF$PATNO <- rep(cogcat$PATNO, 9)
 testDF <- testDF[!is.na(testDF$value),]
@@ -103,9 +117,7 @@ kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
 kaplanDF <- inner_join(kaplanDF, predictDF, by = c("PATNO" = "PATNO"))
 
 
-survdiff(Surv(Time, Test) ~ predClass, data = kaplanDF)
-
-
+# Make kaplan-meier curve
 kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
 p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>% 
   ggsurvfit(size = 1.5) +
@@ -116,10 +128,13 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
   ylab("Probability of\nnormal cognition") +
   xlab("Follow-up time (years)") +
   scale_x_continuous(breaks = c(0,2,4,6,8)) +
-  #ggtitle("Cognitive impairment (PPMI)") +
+  ggtitle("Dementia/MCI") +
   #xlim(c(0,8)) +
   theme(legend.title = element_blank(),
         legend.position = "bottom",
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10),
+        legend.text = element_text(size = 12),
         plot.title = element_text(hjust = 0.5,
                                   face = "bold",
                                   size = 16),
@@ -127,4 +142,18 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
                                      size = 10,
                                      face = "italic"))
 
-ggsave(p, file = "KaplanMeier_PPMI_MRSonly.png", width = 7, height = 5)
+ggsave(p, file = "KaplanMeier_PPMI_MRSonly.jpg", width = 7, height = 5)
+
+kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
+kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
+survdiff(Surv(Time, Test) ~ predClass, 
+         data = kaplanDF1)
+
+coxph(Surv(Time, Test) ~ predClass + Age, 
+         data = kaplanDF) %>% 
+  tbl_regression(exp = TRUE) 
+
+
+kaplanDF$Status1 <- factor(kaplanDF$Status, levels = c("Normal", "Cognitive Impaired"))
+test_roc <- pROC::roc(kaplanDF$Status1, kaplanDF$pred)
+ci(test_roc)

@@ -180,7 +180,7 @@ annotations <- getBM(attributes=c("ensembl_gene_id",
 
 annotations <- annotations[annotations$go_id == "GO:0097113",]
 
-
+load("~/gst_modelCombined_GO_new.RData")
 load("~/Data/probe_annotation.RData")
 load("selCpGs.RData")
 load("~/Data/Probe2Gene_final_ann.RData")
@@ -217,4 +217,13 @@ p <- ggplot(AssociatedGenes)+
         axis.text.x = element_text(angle = 45, hjust = 1),
         plot.title = element_text(face = "bold", size = 14, hjust = 0.5))
 
-ggsave(p, file = "AMPAclustering.png", width = 8, height = 5)
+ggsave(p, file = "AMPAclustering.jpg", width = 8, height = 5)
+
+
+gst_bp <- gst[gst$ONTOLOGY == "BP",]
+gst_bp$FDR <- p.adjust(gst_bp$P.DE, method = "fdr")
+gst_bp <- arrange(gst_bp, by = P.DE)
+gst_bp$SigGenesInSet <- str_replace_all(gst_bp$SigGenesInSet,",", ";")
+
+write.csv(gst_bp, file = "GOanalysis_all.csv",quote = FALSE)
+write.csv(head(gst_bp,20), file = "GOanalysis_fil.csv",quote = FALSE)

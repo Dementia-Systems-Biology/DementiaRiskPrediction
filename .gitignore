@@ -4,6 +4,9 @@
 # Ignore png images
 *.png
 
+# Ignore jpg images
+*.jpg
+
 # Ignore html files
 *.html
 
