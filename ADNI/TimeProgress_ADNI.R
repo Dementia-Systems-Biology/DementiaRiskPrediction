@@ -63,6 +63,7 @@ predictDF$predClass[predictDF$Age < quantile(predictDF$Age,0.33)] <- "Low risk"
 predictDF$predClass[predictDF$Age > quantile(predictDF$Age,0.67)] <- "High risk"
 table(predictDF$predClass)
 
+# Histogram of predictions
 predictDF$predClass <- factor(predictDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
 p <- ggplot(predictDF) + 
   geom_histogram(aes(x = log(pred/(1-pred)), fill = predClass),
@@ -133,6 +134,9 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
   #xlim(c(0,8)) +
   theme(legend.title = element_blank(),
         legend.position = "bottom",
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10),
+        legend.text = element_text(size = 12),
         plot.title = element_text(hjust = 0.5,
                                   face = "bold",
                                   size = 16),
@@ -140,7 +144,7 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
                                      size = 10,
                                      face = "italic"))
 
-ggsave(p, file = "KaplanMeier_ADNI_MMSE.png", width = 7, height = 5)
+ggsave(p, file = "KaplanMeier_ADNI_MMSE.jpg", width = 7, height = 5)
 
 kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
 kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
@@ -151,6 +155,10 @@ coxph(Surv(Time, Test) ~ predClass,
       data = kaplanDF1) %>% 
   tbl_regression(exp = TRUE) 
 
+kaplanDF1$Status <- factor(kaplanDF1$Status, levels = c("Normal", "Cognitive Impaired"))
+test_roc <- pROC::roc(kaplanDF1$Status, kaplanDF1$pred, direction = "<")
+auc(test_roc)
+ci(test_roc)
 
 
 ###############################################################################
@@ -214,6 +222,9 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
   #xlim(c(0,8)) +
   theme(legend.title = element_blank(),
         legend.position = "bottom",
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10),
+        legend.text = element_text(size = 12),
         plot.title = element_text(hjust = 0.5,
                                   face = "bold",
                                   size = 16),
@@ -221,7 +232,7 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
                                      size = 10,
                                      face = "italic"))
 
-ggsave(p, file = paste0("KaplanMeier_ADNI_",var,".png"), width = 7, height = 5)
+ggsave(p, file = paste0("KaplanMeier_ADNI_",var,".jpg"), width = 7, height = 5)
 
 
 kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
@@ -233,6 +244,10 @@ coxph(Surv(Time, Test) ~ predClass,
       data = kaplanDF1) %>% 
   tbl_regression(exp = TRUE) 
 
+kaplanDF1$Status <- factor(kaplanDF1$Status, levels = c("Normal", "Cognitive Impaired"))
+test_roc <- pROC::roc(kaplanDF1$Status, kaplanDF1$pred, direction = "<")
+auc(test_roc)
+ci(test_roc)
 
 
 ###############################################################################
@@ -295,6 +310,9 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
   #xlim(c(0,8)) +
   theme(legend.title = element_blank(),
         legend.position = "bottom",
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10),
+        legend.text = element_text(size = 12),
         plot.title = element_text(hjust = 0.5,
                                   face = "bold",
                                   size = 16),
@@ -302,7 +320,7 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
                                      size = 10,
                                      face = "italic"))
 
-ggsave(p, file = paste0("KaplanMeier_ADNI_",var,".png"), width = 7, height = 5)
+ggsave(p, file = paste0("KaplanMeier_ADNI_",var,".jpg"), width = 7, height = 5)
 
 kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
 kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
@@ -312,6 +330,12 @@ survdiff(Surv(Time, Test) ~ predClass,
 coxph(Surv(Time, Test) ~ predClass, 
       data = kaplanDF1) %>% 
   tbl_regression(exp = TRUE) 
+
+kaplanDF1$Status <- factor(kaplanDF1$Status, levels = c("Normal", "Cognitive Impaired"))
+test_roc <- pROC::roc(kaplanDF1$Status, kaplanDF1$pred, direction = "<")
+auc(test_roc)
+ci(test_roc)
+
 
 ###############################################################################
 
@@ -373,6 +397,9 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
   #xlim(c(0,8)) +
   theme(legend.title = element_blank(),
         legend.position = "bottom",
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10),
+        legend.text = element_text(size = 12),
         plot.title = element_text(hjust = 0.5,
                                   face = "bold",
                                   size = 16),
@@ -380,7 +407,7 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
                                      size = 10,
                                      face = "italic"))
 
-ggsave(p, file = paste0("KaplanMeier_ADNI_",var,".png"), width = 7, height = 5)
+ggsave(p, file = paste0("KaplanMeier_ADNI_",var,".jpg"), width = 7, height = 5)
 
 kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
 kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
@@ -391,6 +418,10 @@ coxph(Surv(Time, Test) ~ predClass,
       data = kaplanDF1) %>% 
   tbl_regression(exp = TRUE) 
 
+kaplanDF1$Status <- factor(kaplanDF1$Status, levels = c("Normal", "Cognitive Impaired"))
+test_roc <- pROC::roc(kaplanDF1$Status, kaplanDF1$pred, direction = "<")
+auc(test_roc)
+ci(test_roc)
 
 ###############################################################################
 
@@ -452,6 +483,9 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
   #xlim(c(0,8)) +
   theme(legend.title = element_blank(),
         legend.position = "bottom",
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10),
+        legend.text = element_text(size = 12),
         plot.title = element_text(hjust = 0.5,
                                   face = "bold",
                                   size = 16),
@@ -459,7 +493,7 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
                                      size = 10,
                                      face = "italic"))
 
-ggsave(p, file = paste0("KaplanMeier_ADNI_",var,".png"), width = 7, height = 5)
+ggsave(p, file = paste0("KaplanMeier_ADNI_",var,".jpg"), width = 7, height = 5)
 
 
 kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
@@ -470,6 +504,12 @@ survdiff(Surv(Time, Test) ~ predClass,
 coxph(Surv(Time, Test) ~ predClass, 
       data = kaplanDF1) %>% 
   tbl_regression(exp = TRUE) 
+
+kaplanDF1$Status <- factor(kaplanDF1$Status, levels = c("Normal", "Cognitive Impaired"))
+test_roc <- pROC::roc(kaplanDF1$Status, kaplanDF1$pred, direction = "<")
+auc(test_roc)
+ci(test_roc)
+
 
 ###############################################################################
 
@@ -531,6 +571,9 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
   #xlim(c(0,8)) +
   theme(legend.title = element_blank(),
         legend.position = "bottom",
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10),
+        legend.text = element_text(size = 12),
         plot.title = element_text(hjust = 0.5,
                                   face = "bold",
                                   size = 16),
@@ -538,7 +581,7 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
                                      size = 10,
                                      face = "italic"))
 
-ggsave(p, file = paste0("KaplanMeier_ADNI_",var,".png"), width = 7, height = 5)
+ggsave(p, file = paste0("KaplanMeier_ADNI_",var,".jpg"), width = 7, height = 5)
 
 
 kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
@@ -550,6 +593,10 @@ coxph(Surv(Time, Test) ~ predClass,
       data = kaplanDF1) %>% 
   tbl_regression(exp = TRUE) 
 
+kaplanDF1$Status <- factor(kaplanDF1$Status, levels = c("Normal", "Cognitive Impaired"))
+test_roc <- pROC::roc(kaplanDF1$Status, kaplanDF1$pred, direction = "<")
+auc(test_roc)
+ci(test_roc)
 ###############################################################################
 
 # ADAS13
@@ -610,6 +657,9 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
   #xlim(c(0,8)) +
   theme(legend.title = element_blank(),
         legend.position = "bottom",
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10),
+        legend.text = element_text(size = 12),
         plot.title = element_text(hjust = 0.5,
                                   face = "bold",
                                   size = 16),
@@ -617,7 +667,7 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
                                      size = 10,
                                      face = "italic"))
 
-ggsave(p, file = paste0("KaplanMeier_ADNI_",var,".png"), width = 7, height = 5)
+ggsave(p, file = paste0("KaplanMeier_ADNI_",var,".jpg"), width = 7, height = 5)
 
 kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
 kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
@@ -629,6 +679,10 @@ coxph(Surv(Time, Test) ~ predClass,
   tbl_regression(exp = TRUE) 
 
 
+kaplanDF1$Status <- factor(kaplanDF1$Status, levels = c("Normal", "Cognitive Impaired"))
+test_roc <- pROC::roc(kaplanDF1$Status, kaplanDF1$pred, direction = "<")
+auc(test_roc)
+ci(test_roc)
 ###############################################################################
 
 # ADAS11
@@ -689,6 +743,9 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
   #xlim(c(0,8)) +
   theme(legend.title = element_blank(),
         legend.position = "bottom",
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10),
+        legend.text = element_text(size = 12),
         plot.title = element_text(hjust = 0.5,
                                   face = "bold",
                                   size = 16),
@@ -696,7 +753,7 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
                                      size = 10,
                                      face = "italic"))
 
-ggsave(p, file = paste0("KaplanMeier_ADNI_",var,".png"), width = 7, height = 5)
+ggsave(p, file = paste0("KaplanMeier_ADNI_",var,".jpg"), width = 7, height = 5)
 
 kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
 kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
@@ -707,6 +764,10 @@ coxph(Surv(Time, Test) ~ predClass,
       data = kaplanDF1) %>% 
   tbl_regression(exp = TRUE) 
 
+kaplanDF1$Status <- factor(kaplanDF1$Status, levels = c("Normal", "Cognitive Impaired"))
+test_roc <- pROC::roc(kaplanDF1$Status, kaplanDF1$pred, direction = "<")
+auc(test_roc)
+ci(test_roc)
 ###############################################################################
 
 # LDELTOTAL
@@ -767,6 +828,9 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
   #xlim(c(0,8)) +
   theme(legend.title = element_blank(),
         legend.position = "bottom",
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10),
+        legend.text = element_text(size = 12),
         plot.title = element_text(hjust = 0.5,
                                   face = "bold",
                                   size = 16),
@@ -774,7 +838,7 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
                                      size = 10,
                                      face = "italic"))
 
-ggsave(p, file = paste0("KaplanMeier_ADNI_",var,".png"), width = 7, height = 5)
+ggsave(p, file = paste0("KaplanMeier_ADNI_",var,".jpg"), width = 7, height = 5)
 
 kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
 kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
@@ -785,7 +849,10 @@ coxph(Surv(Time, Test) ~ predClass,
       data = kaplanDF1) %>% 
   tbl_regression(exp = TRUE) 
 
-
+kaplanDF1$Status <- factor(kaplanDF1$Status, levels = c("Normal", "Cognitive Impaired"))
+test_roc <- pROC::roc(kaplanDF1$Status, kaplanDF1$pred, direction = "<")
+auc(test_roc)
+ci(test_roc)
 ###############################################################################
 
 # DIGITSCOR: Digit Symbol Substitution
@@ -925,6 +992,9 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
   #xlim(c(0,8)) +
   theme(legend.title = element_blank(),
         legend.position = "bottom",
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10),
+        legend.text = element_text(size = 12),
         plot.title = element_text(hjust = 0.5,
                                   face = "bold",
                                   size = 16),
@@ -932,7 +1002,7 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
                                      size = 10,
                                      face = "italic"))
 
-ggsave(p, file = paste0("KaplanMeier_ADNI_",var,".png"), width = 7, height = 5)
+ggsave(p, file = paste0("KaplanMeier_ADNI_",var,".jpg"), width = 7, height = 5)
 
 kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
 kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
@@ -944,3 +1014,7 @@ coxph(Surv(Time, Test) ~ predClass,
   tbl_regression(exp = TRUE) 
 
 
+kaplanDF1$Status <- factor(kaplanDF1$Status, levels = c("Normal", "Cognitive Impaired"))
+test_roc <- pROC::roc(kaplanDF1$Status, kaplanDF1$pred, direction = "<")
+auc(test_roc)
+ci(test_roc)
