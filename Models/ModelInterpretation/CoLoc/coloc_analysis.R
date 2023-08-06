@@ -89,6 +89,7 @@ for (i in 6:length(selCpGs)){
 }
 save(results_all, file = "coloc_results1.RData")
 
+load("coloc_results1.RData")
 
 results_all$Model[results_all$Model == "Alcohol"] <- "Alcohol consumption"
 results_all$Model[results_all$Model == "Depression"] <- "Depression"
@@ -101,6 +102,10 @@ results_all$Model[results_all$Model == "Physical"] <- "Phsyical inactivity"
 results_all$Model[results_all$Model == "SexMale"] <- "Sex"
 results_all$Model[results_all$Model == "SysBP"] <- "Syst. blood pressure"
 
+results_all$pvalue = 1-(results_all$PP.H4.abf + results_all$PP.H3.abf)
+results_all$FDR <- p.adjust(results_all$pvalue, method = "fdr")
+results_all$Sig <- ifelse(results_all$FDR < 0.05, "Yes", "No")
+
 load("~/Data/Probe2Gene_final_ann.RData")
 
 Probe2Gene <- Probe2Gene_final %>%
@@ -112,22 +117,36 @@ Probe2Gene <- Probe2Gene[!duplicated(Probe2Gene),]
 results_all_ann <- left_join(results_all, Probe2Gene,
                               by = c("CpG" = "CpG"))
 
+results_all_ann$pvalue = 1-(results_all_ann$PP.H4.abf + results_all_ann$PP.H3.abf)
+results_all_ann$FDR <- p.adjust(results_all_ann$pvalue, method = "fdr")
+results_all_ann$Sig <- ifelse(results_all_ann$FDR < 0.05, "Yes", "No")
+
+
 set.seed(456)
 p <- ggplot(results_all) +
-  geom_jitter(aes(x = Model, y = `PP.H4.abf`, color = Model), width = 0.3) +
-  geom_text_repel(data = results_all_ann[results_all_ann$PP.H4.abf > 0.75,],
-                  aes(x = Model, y = `PP.H4.abf`, 
-                      label = paste0(CpG, " (",Genes, ")")),
-                  size = 3, color = "#737373", fontface = "italic") + 
-  ylab("Posterior probability\nfor shared genetic variant") +
+  geom_point(aes(x = Model, y = -log10(pvalue+10^-10), color = Model), 
+             position = position_jitter(width = 0.3, seed = 123)) +
+  geom_point(aes(x = Model, y = -log10(pvalue+10^-10), color = Model, alpha = Sig), 
+             position = position_jitter(width = 0.3, seed = 123), 
+             shape = 1, color = "#737373", size = 2.5) +
+  #geom_text_repel(data = results_all_ann[results_all_ann$FDR < 0.05,],
+   #               aes(x = Model, y = 1-pvalue, 
+   #                   label = paste0(CpG, " (",Genes, ")")), max.overlaps = 100,
+    #              size = 3, color = "#737373", fontface = "italic") + 
+  ylab("-log10 p-value (H3 + H4)") +
   xlab(NULL) +
   theme_classic() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         legend.position = "none") +
-  scale_color_manual(values = rep(c("#FB6A4A","#CB181D"),6))
+  scale_color_manual(values = rep(c("#FB6A4A","#CB181D"),6)) +
+  scale_alpha_manual(values = c(0,1))
 
 
-ggsave(p, file = "Coloc_results.png", width = 8, height = 5)
+ggsave(p, file = "Coloc_results_v2.jpg", width = 8, height = 5)
+
+
+results_all_ann[results_all_ann$FDR < 0.05,]
+Probe2Gene_final[Probe2Gene_final$CpG == "cg19514613",]
 
 check_dataset(coloc_data_GWAS,warn.minp=1e-10)
 
