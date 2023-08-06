@@ -1,17 +1,18 @@
+# The script and models were modified from:
+# https://zenodo.org/record/4646300#.ZFJg53ZBxPY
 
 # Clear workspace and console
 rm(list = ls())
 cat("\014") 
 
 # Read models
-# Models are available at: https://zenodo.org/record/4646300#.ZFJg53ZBxPY
 cpgs <- read.csv("Data/Predictors_Shiny_by_Groups.csv", header = T) 
 
 # Load data
-load("EXTEND/X_EXTEND_imp.RData")
+load("EXTEND/Data/X_EXTEND_imp.RData")
 data <- X_EXTEND_imp
 
-load("Data/metaData_ageFil.RData")
+load("EXTEND/Data/metaData_ageFil.RData")
 all(rownames(X_EXTEND_imp) == dat$Basename)
 
 #################################################################################
@@ -87,84 +88,3 @@ for(i in loop){
 out$'Epigenetic Age (Zhang)' <- out$'Epigenetic Age (Zhang)' + 65.79295
 out$ID <- row.names(out) 
 out <- out[,c(ncol(out),1:(ncol(out)-1))] 
-
-
-#################################################################################
-
-# Validate
-
-################################################################################
-
-rsq <- R2(out$`Epigenetic Age (Zhang)`, dat$Age)
-rsq <- R2(out$`Body Mass Index`, as.numeric(dat$BMI))
-rsq <- R2(out$`HDL Cholesterol`[!is.na(dat$HDL) & dat$HDL != "." ],
-   as.numeric(dat$HDL[!is.na(dat$HDL) & dat$HDL != "." ]))
-rsq <- R2(out$`Body Fat %`[!is.na(dat$Percentage.Fat)],
-   dat$Percentage.Fat[!is.na(dat$Percentage.Fat)])
-
-
-library(psychometric)
-n = 1076
-k = 1
-CI.Rsq(rsq, n, k, level = 0.95)
-
-
-load("~/Data/Y_CAIDE1.RData")
-out_fil <- out[Y_CAIDE1$Basename,]
-plot(out_fil$`Body Mass Index`, Y_CAIDE1$BMI_c)
-roc_list <- pROC::roc(Y_CAIDE1$BMI_c,out_fil$`Body Mass Index`)
-plot(roc_list)
-auc(roc_list)
-
-load("~/Data/Y_LIBRA.RData")
-out_fil <- out[Y_LIBRA$Basename,]
-roc_list <- pROC::roc(Y_LIBRA$LtoMAlcohol,out_fil$Alcohol)
-plot(roc_list)
-auc(roc_list)
-
-roc_list <- pROC::roc(Y_LIBRA$Highcholesterol,out_fil$`HDL Cholesterol`)
-plot(roc_list)
-auc(roc_list)
-
-roc_list <- pROC::roc(Y_LIBRA$SMOKING,out_fil$Smoking)
-plot(roc_list)
-auc(roc_list)
-
-
-
-## combine Sex and Age information
-if(is.null(sexageinfo)){
-  out$'True Age' <- NA 
-  out$Sex <- NA 
-} else { 
-  ids = out$ID
-  sexageinfo = sexageinfo[match(ids, sexageinfo$ID),] 
-  out$'True Age' <- sexageinfo$Age
-  out$Sex <- sexageinfo$Sex
-  message("4. Sex and Age Info Added")
-}
-
-## Correct order of output file 
-
-out <- out[,c(1,ncol(out),(ncol(out)-1), 2:c(ncol(out)-2))]
-
-
-
-## combine covariates  information
-if(is.null(covariates)){
-  NULL 
-} else { 
-  ids = out$ID
-  covariates = covariates[match(ids, covariates$ID),] 
-  out <- merge(out, covariates, by = "ID")
-  for(i in names(out)[5:10]){ 
-    out[,i] <- resid(lm(as.formula(paste(paste(bt(i),"~"),paste(bt(paste(c(names(covariates)[-which(names(covariates) %in% "ID")]))), collapse = "+"))), na.action = na.exclude, data = out))
-  }
-  out <- out[,c(1:10)]
-  message("5. Covariates")
-}
-
-
-
-## Save File and Finish Up 
-message("Analysis Finished! Thank you for using our application. Output File is called \"out\"") 

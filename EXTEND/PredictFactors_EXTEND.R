@@ -1,3 +1,7 @@
+# File: PredictFactors_EXTEND.R
+# Author: Jarno Koetsier
+# Date: August 6, 2023
+
 # Clear workspace and console
 rm(list = ls())
 cat("\014") 
@@ -14,8 +18,8 @@ library(ggpubr)
 library(pROC)
 
 # Load data
-load("Data/metaData_ageFil.RData")
-load("Data/methSet_allNorm_fil.RData")
+load("EXTEND/Data/metaData_ageFil.RData")
+load("EXTEND/Data/methSet_allNorm_fil.RData")
 
 
 #################################################################################
@@ -79,7 +83,7 @@ rownames(Y_all) <- dat$Basename
 
 Y_train <- Y_all[colnames(methSet_allNorm_fil),] 
 
-save(Y_train, file = "EXTEND/Y_train_factors.RData")
+save(Y_train, file = "EXTEND/Data/Y_train_factors.RData")
 
 #################################################################################
 
@@ -103,11 +107,11 @@ library(ggpubr)
 library(pROC)
 
 # Load data
-load("EXTEND/Y_train_factors.RData")
-load("Data/methSet_allNorm_fil.RData")
+load("EXTEND/Data/Y_train_factors.RData")
+load("EXTEND/Data/methSet_allNorm_fil.RData")
 
+# Set training data
 X_train <- methSet_allNorm_fil
-
 all(colnames(X_train) == rownames(Y_train))
 
 
@@ -115,6 +119,7 @@ all(colnames(X_train) == rownames(Y_train))
 # correlation-based selection
 #*****************************************************************************#
 
+# Calculate correlations between CpGs and risk factors
 correlations <- matrix(NA, nrow = nrow(X_train), ncol = ncol(Y_train))
 for (i in 1:ncol(Y_train)) {
   factor <- Y_train[!is.na(Y_train[,i]),i]
@@ -130,16 +135,19 @@ for (i in 1:ncol(Y_train)) {
 }
 rownames(correlations) <- rownames(X_train)
 colnames(correlations) <- colnames(Y_train)
-save(correlations, file = "EXTEND/correlations_factors.RData")
+save(correlations, file = "EXTEND/Data/correlations_factors.RData")
 
 
-# Selected probes
+# Selected the 70000 most correlated probes for each risk factor
+# In the cross-validation, the 10,000 most correlated probes will be selected 
+# in each fold. This prior selection of 70,000 probes makes the cross-validation
+# more computationally efficient.
 selectedProbes <- list()
 for (i in 1:ncol(correlations)){
   selectedProbes[[i]] <- names(tail(sort(abs(correlations[,i])),70000))
 }
 names(selectedProbes) <- colnames(correlations)
-save(selectedProbes, file = "EXTEND/selectedProbes.RData")
+save(selectedProbes, file = "EXTEND/Data/selectedProbes.RData")
 
 
 
@@ -152,6 +160,7 @@ save(selectedProbes, file = "EXTEND/selectedProbes.RData")
 #*****************************************************************************#
 # Correlation + ElasticNet
 #*****************************************************************************#
+
 # Clear workspace and console
 rm(list = ls())
 cat("\014") 
@@ -168,10 +177,10 @@ library(ggpubr)
 library(pROC)
 
 # Load data
-load("EXTEND/Y_train_factors.RData")
-load("EXTEND/selectedProbes.RData")
-load("Data/methSet_allNorm_fil.RData")
-source("FUN_MachineLearning.R")
+load("EXTEND/Data/Y_train_factors.RData")
+load("EXTEND/Data/selectedProbes.RData")
+load("EXTEND/Data/methSet_allNorm_fil.RData")
+source("EXTEND/FUN_MachineLearning.R")
 
 X_train <- methSet_allNorm_fil
 
@@ -364,10 +373,7 @@ names(trainList) <- colnames(Y_train)
 names(predList) <- colnames(Y_train)
 
 # Save results
-save(trainList, predList, file = "EXTEND/OutputList_Cor_EN.RData")
-
-
-#load("EXTEND/OutputList_Cor_EN.RData")
+save(trainList, predList, file = "Models/MRS_Models/OutputList_Cor_EN.RData")
 
 # Get optimal hyperparameters
 PerformanceList <- list()
@@ -401,7 +407,7 @@ for (i in 1:length(trainList)){
   
 }
 names(PerformanceList) <- names(trainList)
-save(PerformanceList, file = "EXTEND/PerformanceList_Cor_EN.RData")
+save(PerformanceList, file = "Models/MRS_Models/PerformanceList_Cor_EN.RData")
 
 
 
@@ -498,8 +504,7 @@ for (f in 1:length(PerformanceList)){
 names(bestModel) <- colnames(Y_train)
 
 # Save best models
-save(bestModel, file = "EXTEND/bestModel_Cor_EN.RData")
-
+save(bestModel, file = "Models/MRS_Models/bestModel_Cor_EN.RData")
 
 # Pred vs Obs in CV
 perf_discrete <- rep(NA,7)
@@ -517,7 +522,7 @@ for (i in 3:9){
 
 AUCdf <- data.frame(RiskFactor = colnames(Y_train)[3:9],
                     AUC = perf_discrete)
-save(AUCdf, file = "EXTEND/AUCdf_Cor_EN.RData")
+save(AUCdf, file = "Models/MRS_Models/DataAUCdf_Cor_EN.RData")
 
 # Pred vs Obs in CV
 perf_continuous <- rep(NA,2)
@@ -535,13 +540,14 @@ for (i in 1:2){
 
 R2df <- data.frame(RiskFactor = colnames(Y_train)[1:2],
                    R2 = perf_continuous)
-save(R2df, file = "EXTEND/R2df_Cor_EN.RData")
+save(R2df, file = "Models/MRS_Models/R2df_Cor_EN.RData")
 
 
 
 #*****************************************************************************#
 # Correlation + Random forest
 #*****************************************************************************#
+
 # Clear workspace and console
 rm(list = ls())
 cat("\014") 
@@ -553,10 +559,10 @@ library(tidyverse)
 library(pROC)
 
 # Load data
-load("EXTEND/Y_train_factors.RData")
-load("EXTEND/selectedProbes.RData")
+load("EXTEND/Data/Y_train_factors.RData")
+load("EXTEND/Data/selectedProbes.RData")
 load("Data/methSet_allNorm_fil.RData")
-source("FUN_MachineLearning.R")
+source("EXTEND/FUN_MachineLearning.R")
 
 X_train <- methSet_allNorm_fil
 
@@ -753,7 +759,7 @@ for (f in 7:ncol(Y_train)){
   trainList[[f]] <- trainResults
   predList[[f]] <- predResults
   
-  save(trainList, predList, file = "EXTEND/OutputList_Cor_RF.RData")
+  save(trainList, predList, file = "Models/MRS_Models/OutputList_Cor_RF.RData")
   
 }
 
@@ -761,7 +767,7 @@ names(trainList) <- colnames(Y_train)
 names(predList) <- colnames(Y_train)
 
 # Save results
-save(trainList, predList, file = "EXTEND/OutputList_Cor_RF.RData")
+save(trainList, predList, file = "Models/MRS_Models/OutputList_Cor_RF.RData")
 
 
 #load("EXTEND/OutputList_Cor_EN.RData")
@@ -800,7 +806,7 @@ for (i in 1:length(trainList)){
   
 }
 names(PerformanceList) <- names(trainList)
-save(PerformanceList, file = "EXTEND/PerformanceList_Cor_RF.RData")
+save(PerformanceList, file = "Models/MRS_Models/PerformanceList_Cor_RF.RData")
 
 
 
@@ -900,7 +906,7 @@ for (f in 1:length(PerformanceList)){
 names(bestModel) <- colnames(Y_train)
 
 # Save best models
-save(bestModel, file = "EXTEND/bestModel_Cor_RF.RData")
+save(bestModel, file = "Models/MRS_Models/bestModel_Cor_RF.RData")
 
 # Pred vs Obs in CV
 perf_discrete <- rep(NA,7)
@@ -919,7 +925,7 @@ for (i in 3:9){
 
 AUCdf <- data.frame(RiskFactor = colnames(Y_train)[3:9],
                     AUC = perf_discrete)
-save(AUCdf, file = "EXTEND/AUCdf_Cor_RF.RData")
+save(AUCdf, file = "Models/MRS_Models/AUCdf_Cor_RF.RData")
 
 # Pred vs Obs in CV
 perf_continuous <- rep(NA,2)
@@ -938,7 +944,7 @@ for (i in 1:2){
 
 R2df <- data.frame(RiskFactor = colnames(Y_train)[1:2],
                    R2 = perf_continuous)
-save(R2df, file = "EXTEND/R2df_Cor_RF.RData")
+save(R2df, file = "Models/MRS_Models/R2df_Cor_RF.RData")
 
 #*****************************************************************************#
 # ElasticNet w/o feature selection
@@ -959,9 +965,9 @@ library(ggpubr)
 library(pROC)
 
 # Load data
-load("EXTEND/Y_train_factors.RData")
-load("Data/methSet_allNorm_fil.RData")
-source("FUN_MachineLearning.R")
+load("EXTEND/Data/Y_train_factors.RData")
+load("EXTEND/Data/methSet_allNorm_fil.RData")
+source("EXTEND/FUN_MachineLearning.R")
 
 X_train <- methSet_allNorm_fil
 
@@ -1104,8 +1110,8 @@ for (f in 7:ncol(Y_train)){
   
   trainList[[f]] <- fit$results
   predList[[f]] <- fit$pred
-  save(trainList,predList, file = "EXTEND/OutputList_None_EN.RData")
-  save(PerformanceList, file = "EXTEND/PerformanceList_None_EN.RData")
+  save(trainList,predList, file = "Models/MRS_Models/OutputList_None_EN.RData")
+  save(PerformanceList, file = "Models/MRS_Models/PerformanceList_None_EN.RData")
   
 }
 
@@ -1113,10 +1119,10 @@ names(trainList) <- colnames(Y_train)
 names(predList) <- colnames(Y_train)
 
 # Save best models
-save(trainList,predList, file = "EXTEND/OutputList_None_EN.RData")
+save(trainList,predList, file = "Models/MRS_Models/OutputList_None_EN.RData")
 
 names(PerformanceList) <- names(trainList)
-save(PerformanceList, file = "EXTEND/PerformanceList_None_EN.RData")
+save(PerformanceList, file = "Models/MRS_Models/PerformanceList_None_EN.RData")
 
 
 # Train model with optimal hyperparameters
@@ -1196,8 +1202,7 @@ names(bestModel) <- colnames(Y_train)
 # Save best models
 bestModel_34 <- list(bestModel[[3]], bestModel[[4]])
 names(bestModel_34) <- colnames(Y_train)[3:4]
-save(bestModel_34, file = "EXTEND/bestModel_None_EN_34.RData")
-
+save(bestModel_34, file = "Models/MRS_Models/bestModel_None_EN_34.RData")
 
 
 # Pred vs Obs in CV
@@ -1216,7 +1221,7 @@ for (i in 3:9){
 
 AUCdf <- data.frame(RiskFactor = colnames(Y_train)[3:9],
                     AUC = perf_discrete)
-save(AUCdf, file = "EXTEND/AUCdf_None_EN.RData")
+save(AUCdf, file = "Models/MRS_Models//AUCdf_None_EN.RData")
 
 # Pred vs Obs in CV
 perf_continuous <- rep(NA,2)
@@ -1234,7 +1239,7 @@ for (i in 1:2){
 
 R2df <- data.frame(RiskFactor = colnames(Y_train)[1:2],
                    R2 = perf_continuous)
-save(R2df, file = "EXTEND/R2df_None_EN.RData")
+save(R2df, file = "Models/MRS_Models/R2df_None_EN.RData")
 
 
 #*****************************************************************************#
@@ -1257,9 +1262,9 @@ library(pROC)
 
 # Load data
 load("EXTEND/Y_train_factors.RData")
-load("EXTEND/selectedProbes_lit.RData")
-load("Data/methSet_allNorm_fil.RData")
-source("FUN_MachineLearning.R")
+load("Models/MRS_Models/selectedProbes_lit.RData")
+load("EXTEND/Data/methSet_allNorm_fil.RData")
+source("EXTEND/FUN_MachineLearning.R")
 
 selectedProbes <- list(SysBP = selectedProbes_lit$BP,
                        TotalChol = selectedProbes_lit$TC,
@@ -1411,8 +1416,8 @@ for (f in 1:(ncol(Y_train)-1)){
   
   trainList[[f]] <- fit$results
   predList[[f]] <- fit$pred
-  save(trainList,predList, file = "EXTEND/OutputList_Lit_EN.RData")
-  save(PerformanceList, file = "EXTEND/PerformanceList_Lit_EN.RData")
+  save(trainList,predList, file = "Models/MRS_Models/OutputList_Lit_EN.RData")
+  save(PerformanceList, file = "Models/MRS_Models/PerformanceList_Lit_EN.RData")
   
 }
 
@@ -1420,10 +1425,10 @@ names(trainList) <- colnames(Y_train)[-9]
 names(predList) <- colnames(Y_train)[-9]
 
 # Save best models
-save(trainList,predList, file = "EXTEND/OutputList_Lit_EN.RData")
+save(trainList,predList, file = "Models/MRS_Models/OutputList_Lit_EN.RData")
 
 names(PerformanceList) <- names(trainList)[-9]
-save(PerformanceList, file = "EXTEND/PerformanceList_Lit_EN.RData")
+save(PerformanceList, file = "Models/MRS_Models/PerformanceList_Lit_EN.RData")
 
 
 # Train model with optimal hyperparameters
@@ -1501,7 +1506,7 @@ for (f in 1:length(PerformanceList)){
 names(bestModel) <- colnames(Y_train)[-9]
 
 # Save best models
-save(bestModel, file = "EXTEND/bestModel_Lit_EN.RData")
+save(bestModel, file = "Models/MRS_Models/bestModel_Lit_EN.RData")
 
 
 
@@ -1521,7 +1526,7 @@ for (i in 3:8){
 
 AUCdf <- data.frame(RiskFactor = colnames(Y_train)[3:8],
                     AUC = perf_discrete)
-save(AUCdf, file = "EXTEND/AUCdf_Lit_EN.RData")
+save(AUCdf, file = "Models/MRS_Models/AUCdf_Lit_EN.RData")
 
 # Pred vs Obs in CV
 perf_continuous <- rep(NA,2)
@@ -1539,7 +1544,7 @@ for (i in 1:2){
 
 R2df <- data.frame(RiskFactor = colnames(Y_train)[1:2],
                    R2 = perf_continuous)
-save(R2df, file = "EXTEND/R2df_Lit_EN.RData")
+save(R2df, file = "Models/MRS_Models/R2df_Lit_EN.RData")
 
 
 #*****************************************************************************#
@@ -1561,10 +1566,10 @@ library(ggpubr)
 library(pROC)
 
 # Load data
-load("EXTEND/Y_train_factors.RData")
-load("EXTEND/selectedProbes_lit.RData")
-load("Data/methSet_allNorm_fil.RData")
-source("FUN_MachineLearning.R")
+load("EXTEND/Data/Y_train_factors.RData")
+load("Models/MRS_Models/selectedProbes_lit.RData")
+load("EXTEND/Data/methSet_allNorm_fil.RData")
+source("EXTEND/FUN_MachineLearning.R")
 
 selectedProbes <- list(SysBP = selectedProbes_lit$BP,
                        TotalChol = selectedProbes_lit$TC,
@@ -1727,8 +1732,8 @@ for (f in 1:(ncol(Y_train)-1)){
   
   trainList[[f]] <- fit$results
   predList[[f]] <- fit$pred
-  save(trainList,predList, file = "EXTEND/OutputList_Lit_RF.RData")
-  save(PerformanceList, file = "EXTEND/PerformanceList_Lit_RF.RData")
+  save(trainList,predList, file = "Models/MRS_Models/OutputList_Lit_RF.RData")
+  save(PerformanceList, file = "Models/MRS_Models/PerformanceList_Lit_RF.RData")
   
 }
 
@@ -1736,10 +1741,10 @@ names(trainList) <- colnames(Y_train)[-9]
 names(predList) <- colnames(Y_train)[-9]
 
 # Save best models
-save(trainList,predList, file = "EXTEND/OutputList_Lit_RF.RData")
+save(trainList,predList, file = "Models/MRS_Models/OutputList_Lit_RF.RData")
 
 names(PerformanceList) <- names(trainList)[-9]
-save(PerformanceList, file = "EXTEND/PerformanceList_Lit_RF.RData")
+save(PerformanceList, file = "Models/MRS_Models/PerformanceList_Lit_RF.RData")
 
 
 # Train model with optimal hyperparameters
@@ -1820,7 +1825,7 @@ for (f in 1:length(PerformanceList)){
 names(bestModel) <- colnames(Y_train)
 
 # Save best models
-save(bestModel, file = "EXTEND/bestModel_Lit_RF.RData")
+save(bestModel, file = "Models/MRS_Models/bestModel_Lit_RF.RData")
 
 # Pred vs Obs in CV
 perf_discrete <- rep(NA,6)
@@ -1837,7 +1842,7 @@ for (i in 3:8){
 
 AUCdf <- data.frame(RiskFactor = colnames(Y_train)[3:8],
                     AUC = perf_discrete)
-save(AUCdf, file = "EXTEND/AUCdf_Lit_RF.RData")
+save(AUCdf, file = "Models/MRS_Models/AUCdf_Lit_RF.RData")
 
 # Pred vs Obs in CV
 perf_continuous <- rep(NA,2)
@@ -1855,7 +1860,7 @@ for (i in 1:2){
 
 R2df <- data.frame(RiskFactor = colnames(Y_train)[1:2],
                    R2 = perf_continuous)
-save(R2df, file = "EXTEND/R2df_Lit_RF.RData")
+save(R2df, file = "Models/MRS_Models/R2df_Lit_RF.RData")
 
 
 
@@ -1864,6 +1869,7 @@ save(R2df, file = "EXTEND/R2df_Lit_RF.RData")
 # Get best models
 
 ################################################################################
+
 # Clear workspace and console
 rm(list = ls())
 cat("\014") 
@@ -1878,27 +1884,33 @@ library(ggrepel)
 library(tidyverse)
 library(ggpubr)
 library(pROC)
+
+# Load risk factors
+load("EXTEND/Data/Y_train_factors.RData")
+
+# Make empty list
 finalModels <- list()
 
-load("EXTEND/Y_train_factors.RData")
-
 # Systolic blood pressure
-load("EXTEND/bestModel_None_EN_12.RData") # Change 12
-finalModels[[1]] <- bestModel_12[["SysBP"]]
+load("Models/MRS_Models/bestModel_None_EN_12.RData") # Change 12
+finalModels[[1]] <- bestModel[["SysBP"]]
 
 # Total Cholesterol
-load("EXTEND/bestModel_Cor_RF.RData")
+load("Models/MRS_Models/bestModel_Cor_RF.RData")
 finalModels[[2]] <- bestModel[["TotalChol"]]
 
 # Other factors
-load("EXTEND/bestModel_Cor_EN.RData")
+load("Models/MRS_Models/bestModel_Cor_EN.RData")
 for (i in 3:9){
   finalModels[[i]] <- bestModel[[i]]
 }
 
+# Give the list names
 all(names(bestModel) == colnames(Y_train))
 names(finalModels) <- colnames(Y_train)
-save(finalModels, file = "EXTEND/finalModels.RData")
+
+# Save final models
+save(finalModels, file = "Models/MRS_Models/finalModels.RData")
 
 
 

@@ -1,15 +1,21 @@
+# File: PlotFactors_EXTEND.R
+# Author: Jarno Koetsier
+# Date: August 6, 2023
+
 # Clear workspace and console
 rm(list = ls())
 cat("\014") 
 
+# Load packages
 library(tidyverse)
 
 ################################################################################
 
-# Discrete
+# Discrete variables
 
 ################################################################################
 
+# Get performances (AUC)
 plotAUC <- NULL
 methods <- c("Cor_EN", "Cor_RF", "None_EN", "Lit_EN", "Lit_RF")
 methodNames <- c("Correlation,\nElasticNet",
@@ -43,6 +49,7 @@ for (m in 1:length(methods)){
 
 }
 
+# Make plot
 p <- ggplot(plotAUC) +
   geom_bar(aes(x = Method, y = AUC, fill = FactorName, alpha = Method),
            stat = "identity", position = position_dodge(), color = "black") +
@@ -76,6 +83,8 @@ for (i in seq_along(strips)) {
 }
 
 plot(g)
+
+# Save plot
 ggsave(g, file = "Performance_discrete_EXTEND.png", width = 8, height = 5)
 
 ################################################################################
@@ -84,6 +93,7 @@ ggsave(g, file = "Performance_discrete_EXTEND.png", width = 8, height = 5)
 
 ################################################################################
 
+# Get performances (R-squared, R2)
 plotR2 <- NULL
 methods <- c("Cor_EN", "Cor_RF", "None_EN", "Lit_EN", "Lit_RF")
 methodNames <- c("Correlation,\nElasticNet",
@@ -99,6 +109,7 @@ for (m in 1:length(methods)){
   plotR2 <- rbind.data.frame(plotR2, R2df)
 }
 
+# Make plot
 p <- ggplot(plotR2) +
   geom_bar(aes(x = Method, y = R2, fill = FactorName, alpha = Method),
            stat = "identity", position = position_dodge(), color = "black") +
@@ -133,4 +144,5 @@ for (i in seq_along(strips)) {
 
 plot(g)
 
+# Save plot
 ggsave(g, file = "Performance_continuous1_EXTEND.png", width = 3, height = 5)

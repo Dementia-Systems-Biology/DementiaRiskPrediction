@@ -1,3 +1,8 @@
+# File: Impute_EXTEND.R
+# Author: Jarno Koetsier
+# Date: August 6, 2023
+
+# Load packages
 library(tidyverse)
 library(caret)
 library(glmnet)
@@ -10,12 +15,10 @@ library(missMDA)
 rm(list = ls())
 cat("\014") 
 
-
 # Load data
-load("~/Data/lumi_dpval_EXTEND.RData")
-load("~/Data/methSet_allNorm_EXTEND.RData")
-load("~/Data/metaData_ageFil.RData")
-
+load("EXTEND/Data/lumi_dpval_EXTEND.RData")
+load("EXTEND/Data/methSet_allNorm_EXTEND.RData")
+load("EXTEND/Data/metaData_ageFil.RData")
 
 # Convert to M-values
 X_EXTEND_M <- log2(methSet_allNorm/(1-methSet_allNorm))
@@ -57,9 +60,15 @@ for (p in 3:nPCs_CV){
   save(pred, file = "EXTEND/pred_imp.RData")
 }
 
-
 load("EXTEND/pred_imp.RData")
-test <- apply(pred[,1:10],2,function(x) RMSE(obs = values,pred = x))
+
+# Get number of PCs with minimal MAE
+test <- apply(pred,2,function(x) MAE(obs = values,pred = x))
 plot(test)
-X_EXTEND_imp <- imputePCA(t(X_EXTEND_mis),ncp = 7)$completeObs
-save(X_EXTEND_imp, file = "EXTEND/X_EXTEND_imp.RData")
+optPC <- which.min(test)
+
+# Perform imputation
+X_EXTEND_imp <- imputePCA(t(X_EXTEND_mis),ncp = optPC)$completeObs
+
+# Save data
+save(X_EXTEND_imp, file = "EXTEND/Data/X_EXTEND_imp.RData")
