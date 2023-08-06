@@ -2,9 +2,9 @@
 ![status](https://badgen.net/badge/Status/Complete/green)
 
 <h1 align="center">
-Blood-derived DNA methylation-based prediction
+Blood-derived DNA methylation-based
    <br>
-of midlife dementia risk
+prediction of midlife dementia risk
 </h1>
 
 <p align="center">
