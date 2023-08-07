@@ -1,4 +1,10 @@
-
+# ============================================================================ #
+# File: ML_EMIF_PGS.R
+# Author: Jarno Koetsier
+# Date: August 6, 2023
+# Description: Machine learning (ML) using MRSs and PGSs as variables in the
+#              EMIF-AD cohort.
+# ============================================================================ #
 
 ###############################################################################
 
@@ -14,29 +20,34 @@ library(spls)
 library(ranger)
 library(missMDA)
 library(pROC)
+library(e1071)
+library(ranger)
+library(dplyr)
 
 # Clear workspace and console
 rm(list = ls())
 cat("\014") 
 
 # Load training and test data
-load("EMIF/X_train_EMIF.RData")
-load("EMIF/Y_train_EMIF.RData")
-load("EMIF/X_test_EMIF.RData")
-load("EMIF/Y_test_EMIF.RData")
+load("EMIF-AD/Data/X_train_EMIF.RData")
+load("EMIF-AD/Data/Y_train_EMIF.RData")
+load("EMIF-AD/Data/X_test_EMIF.RData")
+load("EMIF-AD/Data/Y_test_EMIF.RData")
+
+# Add PGSs:
 
 # Load data
 load("EMIF/metaData_fil.RData")
 load("~/EMIF/PGS_EMIF_AD.RData")
+
+# Get PGSs
 output <- inner_join(PGS_all,metaData_fil[,c("X","Sample_Name")],by = c("ID" = "Sample_Name"))
 rownames(output) <- output$X
 samples <- output$X
-
 output <- output[,2:13]
 colnames(output) <- paste0(colnames(output), "_PGS")
 
-
-# MCI and NL only
+# Get MCI and Control (NL) samples only
 X_train <- X_train[(Y_train$Diagnosis == "MCI") | (Y_train$Diagnosis == "NL"),]
 Y_train <- Y_train[(Y_train$Diagnosis == "MCI")| (Y_train$Diagnosis == "NL"),]
 X_test <- X_test[(Y_test$Diagnosis == "MCI") |  (Y_test$Diagnosis == "NL"),]
@@ -49,18 +60,16 @@ Y_test$Y <- factor(ifelse(Y_test$Diagnosis == "NL","Control","MCI"),
                    levels = c("Control", "MCI"))
 
 
+# Samples with PGSs and MRSs available
 Y_train <- Y_train[intersect(samples, rownames(Y_train)),]
 Y_test <- Y_test[intersect(samples, rownames(Y_test)),]
-
 X_train <- cbind.data.frame(X_train[rownames(Y_train),], output[rownames(Y_train),])
 X_test <- cbind.data.frame(X_test[rownames(Y_test),], output[rownames(Y_test),])
-
-
 
 table(Y_test$Y)
 table(Y_train$Y)
 
-# Create index
+# Create sample index for repeated cross-validation
 set.seed(123)
 CVindex <- NULL
 for (r in 1:5){
@@ -69,7 +78,6 @@ for (r in 1:5){
   CVindex <- c(CVindex, temp)
 }
 rm(temp)
-
 
 # Settings for repeated cross-valBasename
 fitControl <- trainControl(method = "repeatedcv", 
@@ -113,7 +121,7 @@ fit <- train(x = X_train,
              maximize = TRUE)
 
 # Save model
-save(fit, file = "EMIF/Fit_EMIF_MCI_EN_PGS2.RData")
+save(fit, file = "Models/EMIF_Models/PGS_AD/Fit_EMIF_MCI_EN_PGS2.RData")
 
 # Prediction in test set
 testPred <- predict(fit, X_test, type = "prob")
@@ -135,7 +143,7 @@ fit <- train(x = X_train[,str_detect(colnames(X_train), "PGS")],
              maximize = TRUE)
 
 # Save model
-save(fit, file = "EMIF/Fit_EMIF_MCI_EN_PGSonly.RData")
+save(fit, file = "Models/EMIF_Models/PGS_AD/Fit_EMIF_MCI_EN_PGSonly.RData")
 
 # Prediction in test set
 testPred <- predict(fit, X_test, type = "prob")
@@ -180,7 +188,7 @@ fit <- train(x = X_train,
              maximize = TRUE)
 
 # Save model
-save(fit, file = "EMIF/Fit_EMIF_MCI_sPLS_PGS2.RData")
+save(fit, file = "Models/EMIF_Models/PGS_AD/Fit_EMIF_MCI_sPLS_PGS2.RData")
 
 # Prediction in test set
 testPred <- predict(fit, X_test, type = "prob")
@@ -203,7 +211,7 @@ fit <- train(x = X_train[,str_detect(colnames(X_train), "PGS")],
              maximize = TRUE)
 
 # Save model
-save(fit, file = "EMIF/Fit_EMIF_MCI_sPLS_PGSonly.RData")
+save(fit, file = "Models/EMIF_Models/PGS_AD/Fit_EMIF_MCI_sPLS_PGSonly.RData")
 
 # Prediction in test set
 testPred <- predict(fit, X_test, type = "prob")
@@ -214,14 +222,9 @@ auc(roc_test)
 # RandomForest
 #*****************************************************************************#
 
-library(e1071)
-library(ranger)
-library(dplyr)
-
 #=============================================================================#
 # PGS + MRS
 #=============================================================================#
-
 
 X_train1 <- X_train
 
@@ -280,7 +283,7 @@ for (f in 1:ncol(X_train1)){
 fit <- fitList[[which.max(performance)]]
 
 # Save model
-save(fit, file = "EMIF/Fit_EMIF_MCI_RF_PGS2.RData")
+save(fit, file = "Models/EMIF_Models/PGS_AD/Fit_EMIF_MCI_RF_PGS2.RData")
 
 
 # Prediction in test set
@@ -351,7 +354,7 @@ for (f in 1:ncol(X_train1)){
 fit <- fitList[[which.max(performance)]]
 
 # Save model
-save(fit, file = "EMIF/Fit_EMIF_MCI_RF_PGSonly.RData")
+save(fit, file = "Models/EMIF_Models/PGS_AD/Fit_EMIF_MCI_RF_PGSonly.RData")
 
 
 # Prediction in test set
@@ -360,32 +363,30 @@ roc_test <- pROC::roc(Y_test$Y, testPred$MCI)
 auc(roc_test)
 
 
-
 #*****************************************************************************#
 # Plotting
 #*****************************************************************************#
 
-
-load("EMIF/Fit_EMIF_MCI_RF_PGS2.RData")
+# Load models and predictions
+load("Models/EMIF_Models/PGS_AD/Fit_EMIF_MCI_RF_PGS2.RData")
 RF <- predict(fit, X_test, type = "prob")
 
-load("EMIF/Fit_EMIF_MCI_EN_PGS2.RData")
+load("Models/EMIF_Models/PGS_AD/Fit_EMIF_MCI_EN_PGS2.RData")
 EN <- predict(fit, X_test, type = "prob")
 
-load("EMIF/Fit_EMIF_MCI_sPLS_PGS2.RData")
+load("Models/EMIF_Models/PGS_AD/Fit_EMIF_MCI_sPLS_PGS2.RData")
 sPLS <- predict(fit, X_test, type = "prob")
 
-load("EMIF/Fit_EMIF_MCI_RF_PGSonly.RData")
+load("Models/EMIF_Models/PGS_AD/Fit_EMIF_MCI_RF_PGSonly.RData")
 RFonly <- predict(fit, X_test, type = "prob")
 
-load("EMIF/Fit_EMIF_MCI_EN_PGSonly.RData")
+load("Models/EMIF_Models/PGS_AD/Fit_EMIF_MCI_EN_PGSonly.RData")
 ENonly <- predict(fit, X_test, type = "prob")
 
-load("EMIF/Fit_EMIF_MCI_sPLS_PGSonly.RData")
+load("Models/EMIF_Models/PGS_AD/Fit_EMIF_MCI_sPLS_PGSonly.RData")
 sPLSonly <- predict(fit, X_test, type = "prob")
 
-
-
+# Combine predictions into dataframe
 plotDF <- data.frame(EN = EN$MCI,
                      sPLS = sPLS$MCI,
                      RF = RF$MCI,
@@ -460,5 +461,5 @@ p <- ggplot(ROCplot) +
                                      size = 10,
                                      face = "italic"))
 
-ggsave(p, file = "EMIF/ROC_MCI_EMIF_CSF_PGS.png", width = 7, height = 5)
-save(p, file = "EMIF/ROC_MCI_EMIF_MRS_CSF_PGS.RData")
+# Save plot
+ggsave(p, file = "EMIF-AD/ModelPerformance/ROC_MCI_EMIF_CSF_PGS.png", width = 7, height = 5)

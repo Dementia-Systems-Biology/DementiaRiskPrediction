@@ -707,5 +707,5 @@ p <- ggplot(ROCplot) +
                                      face = "italic"))
 
 # Save plot
-ggsave(p, file = "EMIF/ROC_MCI_EMIF_combinedPlot.png", width = 7, height = 5)
+ggsave(p, file = "EMIF-AD/ModelPerformance/ROC_MCI_EMIF_combinedPlot.png", width = 7, height = 5)
 
