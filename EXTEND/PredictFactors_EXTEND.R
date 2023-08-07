@@ -1,6 +1,9 @@
+# ============================================================================ #
 # File: PredictFactors_EXTEND.R
 # Author: Jarno Koetsier
 # Date: August 6, 2023
+# Description: Predict the dementia risk factors in the EXTEND cohort.
+# ============================================================================ #
 
 # Clear workspace and console
 rm(list = ls())

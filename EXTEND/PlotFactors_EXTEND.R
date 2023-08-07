@@ -1,6 +1,10 @@
+# ============================================================================ #
 # File: PlotFactors_EXTEND.R
 # Author: Jarno Koetsier
 # Date: August 6, 2023
+# Description: Plot the predictive performance of the risk factor models in the
+#              EXTEND cohort.
+# ============================================================================ #
 
 # Clear workspace and console
 rm(list = ls())

@@ -1,6 +1,9 @@
+# ============================================================================ #
 # File: Impute_EXTEND.R
 # Author: Jarno Koetsier
 # Date: August 6, 2023
+# Description: Impute the low quality values in the EXTEND data.
+# ============================================================================ #
 
 # Load packages
 library(tidyverse)

@@ -1,6 +1,9 @@
+# ============================================================================ #
 # File: ValidatePGSs_EXTEND.R
 # Author: Jarno Koetsier
 # Date: August 6, 2023
+# Description: validation of PGSs in the EXTEND cohort.
+# ============================================================================ #
 
 # Clear workspace and console
 rm(list = ls())
