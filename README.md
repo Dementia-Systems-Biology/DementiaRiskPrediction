@@ -10,7 +10,7 @@ prediction of midlife dementia risk
 <p align="center">
 <a href="https://github.com/jarnokoetsier/MidlifeDementiaRisk/blob/main/README.md#Background">Background</a>
      ·
-<a href="https://github.com/jarnokoetsier/MidlifeDementiaRisk/blob/main/README.md#Research-Questions">Research Questions</a>
+<a href="https://github.com/jarnokoetsier/MidlifeDementiaRisk/blob/main/README.md#Research-Question">Research Questions</a>
      ·
 <a href="https://github.com/jarnokoetsier/MidlifeDementiaRisk/blob/main/README.md#Workflow">Workflow</a>
      ·
@@ -18,5 +18,30 @@ prediction of midlife dementia risk
 </p>
 
 <p align="center">
-This repository contains the scripts used for the project <i>Blood-derived DNA methylation-based prediction of midlife dementia risk</i>.
+This repository contains the scripts used for the project <I>"Blood-derived DNA methylation-based prediction of midlife dementia risk"</i>.
 </p>
+<br>
+
+## Background
+As DNA methylation may act as the molecular link between lifestyle/environment and the biological processes governing health and disease, DNA methylation data might be utilized as an alternative to predict midlife dementia risk.
+
+![Methylation](/Images/Methylation.PNG?raw=true "Methylation")
+
+## Research Aim
+The main research objective is to establish a robust model for the prediction of a person's midlife dementia risk.
+
+## Workflow
+
+
+## Contributors
+Jarno Koetsier<sup>1*</sup>, Rachel Cavill<sup>2</sup>, and Ehsan Pishva<sup>3</sup>
+
+*<sup>1</sup> Faculty of Science and Engineering (FSE), Maastricht University*
+
+*<sup>2</sup> Department of Advanced Computing Sciences (DACS), Faculty of Science and Engineering (FSE), Maastricht University*
+
+*<sup>3</sup> Department of Psychiatry and Neuropsychology, School for Mental Health and Neuroscience (MHeNS), Faculty of Health, Medicine and Life Sciences (FHML), Maastricht University*
+
+---
+
+<sup>*</sup>Feel free to contact me via email: j.koetsier@student.maastrichtuniversity.nl
