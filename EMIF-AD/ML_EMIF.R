@@ -1,3 +1,10 @@
+# ============================================================================ #
+# File: ML_EMIF.R
+# Author: Jarno Koetsier
+# Date: August 6, 2023
+# Description: Machine learning (ML) using MRSs as variables in the EMIF-AD 
+#              cohort.
+# ============================================================================ #
 
 # Load packages
 library(prospectr)
@@ -10,8 +17,8 @@ rm(list = ls())
 cat("\014") 
 
 # Load data
-load("EMIF/metaData_EMIF.RData")
-load("EMIF/predictedScore_factors_EMIF.RData")
+load("EMIF-AD/Data/metaData_EMIF.RData")                # Meta data
+load("EMIF-AD/Data/predictedScore_factors_EMIF.RData")  # MRSs
 
 ###############################################################################
 
@@ -19,6 +26,7 @@ load("EMIF/predictedScore_factors_EMIF.RData")
 
 ###############################################################################
 
+# Prepare meta data format
 metaData_EMIF <- as.data.frame(metaData_EMIF)
 rownames(metaData_EMIF) <- metaData_EMIF$X
 metaData_EMIF <- metaData_EMIF[rownames(predictedScore_factors),]
@@ -29,10 +37,10 @@ range(metaData_EMIF$Age)
 
 # Remove converters (Control to MCI or AD)
 
-# CTR CONVERT
+# CTR_CONVERT variable
 converters1 <-  unique(rownames(metaData_EMIF)[metaData_EMIF$CTR_Convert == 1])[-1]
 
-# CTR to MCI or AD
+# CTR to MCI or AD (same as above, done as a confirmation)
 converters2 <- unique(metaData_EMIF$X[(metaData_EMIF$LastFU_Diagnosis == "MCI") | (metaData_EMIF$LastFU_Diagnosis == "AD")])[-1]
 converters2 <- intersect(converters2, metaData_EMIF$X[metaData_EMIF$Diagnosis == "NL"])
 
@@ -41,14 +49,14 @@ converters_all <- unique(c(converters1, converters2))
 metaData_EMIF <- metaData_EMIF[setdiff(rownames(metaData_EMIF), converters_all),]
 table(metaData_EMIF$CTR_Convert)
 
-# Save meta data
+# Save filtered meta data
 samples <- intersect(metaData_EMIF$X, rownames(predictedScore_factors))
 metaData_fil <- metaData_EMIF[samples,]
-save(metaData_fil, file = "EMIF/metaData_fil.RData")
+save(metaData_fil, file = "EMIF-AD/Data/metaData_fil.RData")
 
-# save predicted scores
+# save predicted scores (filtered)
 predictedScore_factors_fil <- predictedScore_factors[samples,]
-save(predictedScore_factors_fil, file = "EMIF/predictedScore_factors_fil.RData")
+save(predictedScore_factors_fil, file = "EMIF-AD/Data/predictedScore_factors_fil.RData")
 
 
 ###############################################################################
@@ -68,10 +76,10 @@ rm(list = ls())
 cat("\014") 
 
 # Load data
-load("EMIF/metaData_fil.RData")
-load("EMIF/predictedScore_factors_fil.RData")
+load("EMIF-AD/Data/metaData_fil.RData")
+load("EMIF-AD/Data/predictedScore_factors_fil.RData")
 
-# Male
+# Split the data into a training and test set (for all male samples)
 nTrain0 <- round(0.7*nrow(predictedScore_factors_fil[metaData_fil$Gender == 0,]))
 selectedSamples0 <- prospectr::kenStone(
   X = predictedScore_factors_fil[metaData_fil$Gender == 0,], 
@@ -83,7 +91,7 @@ temp0 <- rownames(predictedScore_factors_fil)[metaData_fil$Gender == 0]
 test0 <- temp0[selectedSamples0$test]
 train0 <- temp0[selectedSamples0$model]
 
-# Female
+# Split the data into a training and test set (for all female samples)
 nTrain1 <- round(0.7*nrow(predictedScore_factors_fil[metaData_fil$Gender == 1,]))
 selectedSamples1 <- prospectr::kenStone(
   X = predictedScore_factors_fil[metaData_fil$Gender == 1,], 
@@ -114,10 +122,11 @@ sum(duplicated(X_train))
 table(Y_test$Diagnosis)
 table(Y_train$Diagnosis)
 
-save(X_train, file = "EMIF/X_train_EMIF.RData")
-save(Y_train, file = "EMIF/Y_train_EMIF.RData")
-save(X_test, file = "EMIF/X_test_EMIF.RData")
-save(Y_test, file = "EMIF/Y_test_EMIF.RData")
+# Save training and test set
+save(X_train, file = "EMIF-AD/Data/X_train_EMIF.RData")
+save(Y_train, file = "EMIF-AD/Data/Y_train_EMIF.RData")
+save(X_test, file = "EMIF-AD/Data/X_test_EMIF.RData")
+save(Y_test, file = "EMIF-AD/Data/Y_test_EMIF.RData")
 
 ###############################################################################
 
@@ -132,15 +141,18 @@ library(glmnet)
 library(spls)
 library(ranger)
 library(missMDA)
+library(e1071)
+library(ranger)
+library(dplyr)
 
 # Clear workspace and console
 rm(list = ls())
 cat("\014") 
 
-load("EMIF/X_train_EMIF.RData")
-load("EMIF/Y_train_EMIF.RData")
-load("EMIF/X_test_EMIF.RData")
-load("EMIF/Y_test_EMIF.RData")
+load("EMIF-AD/Data/X_train_EMIF.RData")
+load("EMIF-AD/Data/Y_train_EMIF.RData")
+load("EMIF-AD/Data/X_test_EMIF.RData")
+load("EMIF-AD/Data/Y_test_EMIF.RData")
 
 # MCI and NL only
 X_train <- X_train[(Y_train$Diagnosis == "MCI") | (Y_train$Diagnosis == "NL"),]
@@ -207,22 +219,18 @@ fit <- train(x = X_train,
              maximize = TRUE)
 
 # Save model
-save(fit, file = "EMIF/Fit_EMIF_MCI_EN.RData")
+save(fit, file = "Models/EMIF_Models/MRS/Fit_EMIF_MCI_EN.RData")
 
 # Prediction in test set
 testPred <- predict(fit, X_test, type = "prob")
 
+# AUROC
 roc_test <- roc(Y_test$Y, testPred$MCI)
 auc(roc_test)
 ci(roc_test)
+
+# Variable importance
 varImp(fit, scale = FALSE)
-
-roc_test <- roc(Y_test$Y, X_test$EpiAge)
-auc(roc_test)
-
-roc_test <- roc(Y_test$Y, Y_test$AB_Zscore)
-auc(roc_test)
-
 
 #*****************************************************************************#
 # sPLS
@@ -256,14 +264,17 @@ fit <- train(x = X_train,
              maximize = TRUE)
 
 # Save model
-save(fit, file = "EMIF/Fit_EMIF_MCI_sPLS.RData")
+save(fit, file = "Models/EMIF_Models/MRS/Fit_EMIF_MCI_sPLS.RData")
 
 # Prediction in test set
 testPred <- predict(fit, X_test, type = "prob")
 
+# AUROC
 roc_test <- roc(Y_test$Y, testPred$MCI)
 auc(roc_test)
 ci(roc_test)
+
+# Variable importance
 varImp(fit, scale = FALSE)
 
 
@@ -271,10 +282,7 @@ varImp(fit, scale = FALSE)
 # RandomForest + recursive feature elimination
 #*****************************************************************************#
 
-library(e1071)
-library(ranger)
-library(dplyr)
-
+# Perform recursive feature elimination (RFE)
 removedFeatures <- NULL
 fitList <- list()
 features <- colnames(X_train)
@@ -331,13 +339,17 @@ save(fitList, performance, removedFeatures, file = "EMIF/FitList_EMIF_MCI_RF.RDa
 fit <- fitList[[which.max(performance)]]
 
 # Save model
-save(fit, file = "EMIF/Fit_EMIF_MCI_RF.RData")
+save(fit, file = "Models/EMIF_Models/MRS/Fit_EMIF_MCI_RF.RData")
 
 # Prediction in test set
 testPred <- predict(fit, X_test, type = "prob")
+
+# AUROC
 roc_test <- roc(Y_test$Y, testPred$MCI)
 auc(roc_test)
 ci(roc_test)
+
+# Variable importance
 varImp(fit, scale = FALSE)
 
 
@@ -346,12 +358,12 @@ varImp(fit, scale = FALSE)
 # Make ROC plot
 #*****************************************************************************#
 
-# Load models
-load("EMIF/Fit_EMIF_MCI_RF.RData")
+# Load models and predictions
+load("Models/EMIF_Models/MRS/Fit_EMIF_MCI_RF.RData")
 RF <- predict(fit, X_test, type = "prob")
-load("EMIF/Fit_EMIF_MCI_EN.RData")
+load("Models/EMIF_Models/MRS/Fit_EMIF_MCI_EN.RData")
 EN <- predict(fit, X_test, type = "prob")
-load("EMIF/Fit_EMIF_MCI_sPLS.RData")
+load("Models/EMIF_Models/MRS/Fit_EMIF_MCI_sPLS.RData")
 sPLS <- predict(fit, X_test, type = "prob")
 
 # Combine values in data frame
@@ -428,7 +440,6 @@ p <- ggplot(ROCplot) +
   geom_text(data = plotAUC, aes(x = X, y = Y, label = AUC, color = Score),
             fontface = "bold", size = 4) +
   scale_color_manual(values = colors) +
-  #ggtitle("MCI vs Control") +
   theme_classic() +
   theme(legend.title = element_blank(),
         legend.position = "none",
@@ -441,9 +452,9 @@ p <- ggplot(ROCplot) +
                                      size = 10,
                                      face = "italic"))
 
-ggsave(p, file = "EMIF/ROC_MCI_EMIF1.jpg", width = 7, height = 5)
+# Save plot
+ggsave(p, file = "EMIF-AD/ModelPerformance/ROC_MCI_EMIF1.jpg", width = 7, height = 5)
 
-save(p, file = "EMIF/ROC_MCI_EMIF_MRS.RData")
 
 ###############################################################################
 
@@ -451,6 +462,7 @@ save(p, file = "EMIF/ROC_MCI_EMIF_MRS.RData")
 
 ###############################################################################
 
+# Load packages
 library(tidyverse)
 library(caret)
 library(glmnet)
@@ -463,10 +475,11 @@ library(pROC)
 rm(list = ls())
 cat("\014") 
 
-load("EMIF/X_train_EMIF.RData")
-load("EMIF/Y_train_EMIF.RData")
-load("EMIF/X_test_EMIF.RData")
-load("EMIF/Y_test_EMIF.RData")
+# Load data
+load("EMIF-AD/Data/X_train_EMIF.RData")
+load("EMIF-AD/Data/Y_train_EMIF.RData")
+load("EMIF-AD/Data/X_test_EMIF.RData")
+load("EMIF-AD/Data/Y_test_EMIF.RData")
 
 # AD and NL only
 X_train <- X_train[(Y_train$Diagnosis == "AD") | (Y_train$Diagnosis == "NL"),]
@@ -532,7 +545,7 @@ fit <- train(x = X_train,
              maximize = TRUE)
 
 # Save model
-save(fit, file = "EMIF/Fit_EMIF_AD_EN.RData")
+save(fit, file = "Models/EMIF_Models/MRS/Fit_EMIF_AD_EN.RData")
 
 # Prediction in test set
 testPred <- predict(fit, X_test, type = "prob")
@@ -581,7 +594,7 @@ fit <- train(x = X_train,
              maximize = TRUE)
 
 # Save model
-save(fit, file = "EMIF/Fit_EMIF_AD_sPLS.RData")
+save(fit, file = "Models/EMIF_Models/MRS/Fit_EMIF_AD_sPLS.RData")
 
 # Prediction in test set
 testPred <- predict(fit, X_test, type = "prob")
@@ -655,7 +668,7 @@ save(fitList, performance, removedFeatures, file = "EMIF/FitList_EMIF_AD_RF.RDat
 fit <- fitList[[which.max(performance)]]
 
 # Save model
-save(fit, file = "EMIF/Fit_EMIF_AD_RF.RData")
+save(fit, file = "Models/EMIF_Models/MRS/Fit_EMIF_AD_RF.RData")
 
 # Prediction in test set
 testPred <- predict(fit, X_test, type = "prob")
@@ -668,11 +681,11 @@ auc(roc_test)
 #*****************************************************************************#
 
 # Load models
-load("EMIF/Fit_EMIF_AD_RF.RData")
+load("Models/EMIF_Models/MRS/Fit_EMIF_AD_RF.RData")
 RF <- predict(fit, X_test, type = "prob")
-load("EMIF/Fit_EMIF_AD_EN.RData")
+load("Models/EMIF_Models/MRS/Fit_EMIF_AD_EN.RData")
 EN <- predict(fit, X_test, type = "prob")
-load("EMIF/Fit_EMIF_AD_sPLS.RData")
+load("Models/EMIF_Models/MRS/Fit_EMIF_AD_sPLS.RData")
 sPLS <- predict(fit, X_test, type = "prob")
 
 # Combine values in data frame
@@ -703,7 +716,6 @@ summary(model)
 # Epigenetic age
 model <- lm(Ynum ~ EpiAge + Age + Sex, data = plotDF)
 summary(model)
-
 
 # Calculate sensitivites, specificities and AUC values
 score <- c("EpiAge","EN", "sPLS", "RF")
@@ -750,7 +762,6 @@ p <- ggplot(ROCplot) +
   geom_text(data = plotAUC, aes(x = X, y = Y, label = AUC, color = Score),
             fontface = "bold", size = 4) +
   scale_color_manual(values = colors) +
-  #ggtitle("MCI vs Control") +
   theme_classic() +
   theme(legend.title = element_blank(),
         legend.position = "none",
@@ -763,61 +774,5 @@ p <- ggplot(ROCplot) +
                                      size = 10,
                                      face = "italic"))
 
-ggsave(p, file = "EMIF/ROC_AD_EMIF1.jpg", width = 7, height = 5)
+ggsave(p, file = "EMIF-AD/ModelPerformance/ROC_AD_EMIF1.jpg", width = 7, height = 5)
 
-
-
-# Calculate sensitivites, specificities and AUC values
-score <- c("EN", "sPLS", "RF","EpiAge")
-scoreName <- c("Epi-AD (ElasticNet)", "Epi-AD (sPLS-DA)", 
-               "Epi-AD (Random Forest)", "Epi-Age")
-ROCplot <- NULL                       # Data frame with sensitivities and specificities
-aucValue <- rep(NA, length(score))    # AUC
-liValue <- rep(NA, length(score))     # lower interval value of AUC
-uiValue <- rep(NA, length(score))     # upper interval value of AUC
-
-for (i in 1:length(score)){
-  test <- pROC::roc(plotDF$Y, plotDF[,score[i]])
-  
-  temp <- data.frame(Sensitivity = test$sensitivities,
-                     Specificity = test$specificities,
-                     Class = rep(scoreName[i],length(test$specificities)))
-  
-  ROCplot <- rbind.data.frame(ROCplot, temp)
-  aucValue[i] <- format(round(as.numeric(auc(test)),2),nsmall = 2)
-  liValue[i] <- format(round(as.numeric(ci(test)[1]),2),nsmall = 2)
-  uiValue[i] <- format(round(as.numeric(ci(test)[3]),2),nsmall = 2)
-}
-
-# Combine AUC values into data frame
-plotAUC <- data.frame(AUC = paste0("AUROC = ",aucValue, " (", liValue, "-", uiValue, ")"),
-                      Score = scoreName,
-                      X = 0.8,
-                      Y = rev(seq(0.05,0.25,length.out = length(aucValue))))
-
-ROCplot$Class <- factor(ROCplot$Class, levels = scoreName)
-
-# Colors for plotting
-colors <- rev(c("#084594","#EF3B2C","#CB181D", "#99000D"))
-
-# Make plot
-p <- ggplot(ROCplot) +
-  geom_abline(intercept = 0, slope = 1, linetype = "dashed", size = 2) +
-  geom_path(aes(y = Sensitivity, x = 1- Specificity,
-                color = Class), 
-            size = 1.5, linetype = "solid") +
-  geom_text(data = plotAUC, aes(x = X, y = Y, label = AUC, color = Score),
-            fontface = "bold", size = 4) +
-  scale_color_manual(values = colors) +
-  ggtitle("AD vs Control") +
-  theme_classic() +
-  theme(legend.title = element_blank(),
-        legend.position = "right",
-        plot.title = element_text(hjust = 0.5,
-                                  face = "bold",
-                                  size = 16),
-        plot.subtitle = element_text(hjust = 0.5,
-                                     size = 10,
-                                     face = "italic"))
-
-ggsave(p, file = "EMIF/ROC_AD_EMIF.png", width = 8, height = 5)

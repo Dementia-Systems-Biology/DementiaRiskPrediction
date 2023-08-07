@@ -1,3 +1,11 @@
+# ============================================================================ #
+# File: ML_EMIF_CSF_PGS.R
+# Author: Jarno Koetsier
+# Date: August 6, 2023
+# Description: Machine learning (ML) using MRSs, PGSs, and CSF biomarkers as 
+#              variables in the EMIF-AD cohort.
+# ============================================================================ #
+
 ###############################################################################
 
 # Make predictions
@@ -18,23 +26,28 @@ rm(list = ls())
 cat("\014") 
 
 # Load training and test data
-load("EMIF/X_train_EMIF.RData")
-load("EMIF/Y_train_EMIF.RData")
-load("EMIF/X_test_EMIF.RData")
-load("EMIF/Y_test_EMIF.RData")
+load("EMIF-AD/Data/X_train_EMIF.RData")
+load("EMIF-AD/Data/Y_train_EMIF.RData")
+load("EMIF-AD/Data/X_test_EMIF.RData")
+load("EMIF-AD/Data/Y_test_EMIF.RData")
 
-# Add PGSs
-load("EMIF/metaData_fil.RData")
-load("~/EMIF/PGS_EMIF_AD.RData")
+# Add PGSs:
+
+# Load PGSs and meta data
+load("EMIF-AD/Data/metaData_fil.RData")
+load("EMIF-AD/Data/PGS_EMIF_AD.RData")
+
+# Get PGSs
 output <- inner_join(PGS_all,metaData_fil[,c("X","Sample_Name")],by = c("ID" = "Sample_Name"))
 rownames(output) <- output$X
 samples_PGS <- output$X
-
 output <- output[,2:13]
 colnames(output) <- paste0(colnames(output), "_PGS")
 
 
-# Add CSF biomarkers
+# Add CSF biomarkers:
+
+# Get CSF biomarkers from meta data
 rownames(metaData_fil) <- metaData_fil$X
 CSFbio <- metaData_fil[,c("Ptau_ASSAY_Zscore", "Ttau_ASSAY_Zscore", "AB_Zscore")]
 colnames(CSFbio) <- c("Ptau_ASSAY_Zscore", "Ttau_ASSAY_Zscore", "AB_Zscore")
@@ -42,10 +55,11 @@ samples_csf <- rownames(CSFbio)[(!is.na(CSFbio$Ptau_ASSAY_Zscore)) &
                                   (!is.na(CSFbio$AB_Zscore)) &
                                   (!is.na(CSFbio$Ttau_ASSAY_Zscore))]
 
+# Samples with PGSs and CSF biomarkers available
 samples <- intersect(samples_PGS, samples_csf)
 
 
-# MCI and NL only
+# Get MCI and control (NL) samples only
 X_train <- X_train[(Y_train$Diagnosis == "MCI") | (Y_train$Diagnosis == "NL"),]
 Y_train <- Y_train[(Y_train$Diagnosis == "MCI")| (Y_train$Diagnosis == "NL"),]
 X_test <- X_test[(Y_test$Diagnosis == "MCI") |  (Y_test$Diagnosis == "NL"),]
@@ -57,23 +71,18 @@ Y_train$Y <- factor(ifelse(Y_train$Diagnosis == "NL","Control","MCI"),
 Y_test$Y <- factor(ifelse(Y_test$Diagnosis == "NL","Control","MCI"),
                    levels = c("Control", "MCI"))
 
-
+# Select samples with MRSs, PGSs, and CSF biomarkers available
 Y_train <- Y_train[intersect(samples, rownames(Y_train)),]
 Y_test <- Y_test[intersect(samples, rownames(Y_test)),]
-
 X_train <- cbind.data.frame(X_train[rownames(Y_train),], CSFbio[rownames(Y_train),])
 X_test <- cbind.data.frame(X_test[rownames(Y_test),], CSFbio[rownames(Y_test),])
-
 X_train <- cbind.data.frame(X_train[rownames(Y_train),],output[rownames(Y_train),])
 X_test <- cbind.data.frame(X_test[rownames(Y_test),], output[rownames(Y_test),])
-
-
-
 
 table(Y_test$Y)
 table(Y_train$Y)
 
-# Create index
+# Create sample index for repeated cross-validation
 set.seed(123)
 CVindex <- NULL
 for (r in 1:5){
@@ -126,7 +135,7 @@ fit <- train(x = X_train,
              maximize = TRUE)
 
 # Save model
-save(fit, file = "EMIF/Fit_EMIF_MCI_EN_CSF_PGS.RData")
+save(fit, file = "Models/EMIF_Models/PGS_CSF_AD/Fit_EMIF_MCI_EN_CSF_PGS.RData")
 
 # Prediction in test set
 testPred <- predict(fit, X_test, type = "prob")
@@ -147,7 +156,7 @@ fit <- train(x = cbind.data.frame(X_train[,str_detect(colnames(X_train), "PGS")]
              maximize = TRUE)
 
 # Save model
-save(fit, file = "EMIF/Fit_EMIF_MCI_EN_CSF_PGSonly.RData")
+save(fit, file = "Models/EMIF_Models/PGS_CSF_AD/Fit_EMIF_MCI_EN_CSF_PGSonly.RData")
 
 # Prediction in test set
 testPred <- predict(fit, X_test, type = "prob")
@@ -193,7 +202,7 @@ fit <- train(x = X_train,
              maximize = TRUE)
 
 # Save model
-save(fit, file = "EMIF/Fit_EMIF_MCI_sPLS_CSF_PGS.RData")
+save(fit, file = "Models/EMIF_Models/PGS_CSF_AD/Fit_EMIF_MCI_sPLS_CSF_PGS.RData")
 
 # Prediction in test set
 testPred <- predict(fit, X_test, type = "prob")
@@ -215,7 +224,7 @@ fit <- train(x = cbind.data.frame(X_train[,str_detect(colnames(X_train), "PGS")]
              maximize = TRUE)
 
 # Save model
-save(fit, file = "EMIF/Fit_EMIF_MCI_sPLS_CSF_PGSonly.RData")
+save(fit, file = "Models/EMIF_Models/PGS_CSF_AD/Fit_EMIF_MCI_sPLS_CSF_PGSonly.RData")
 
 # Prediction in test set
 testPred <- predict(fit, X_test, type = "prob")
@@ -294,7 +303,7 @@ for (f in 1:ncol(X_train1)){
 fit <- fitList[[which.max(performance)]]
 
 # Save model
-save(fit, file = "EMIF/Fit_EMIF_MCI_RF_CSF_PGS.RData")
+save(fit, file = "Models/EMIF_Models/PGS_CSF_AD/Fit_EMIF_MCI_RF_CSF_PGS.RData")
 
 
 # Prediction in test set
@@ -365,7 +374,7 @@ for (f in 1:ncol(X_train1)){
 fit <- fitList[[which.max(performance)]]
 
 # Save model
-save(fit, file = "EMIF/Fit_EMIF_MCI_RF_CSF_PGSonly.RData")
+save(fit, file = "Models/EMIF_Models/PGS_CSF_AD/Fit_EMIF_MCI_RF_CSF_PGSonly.RData")
 
 
 # Prediction in test set
@@ -377,37 +386,28 @@ auc(roc_test)
 #*****************************************************************************#
 # Plotting
 #*****************************************************************************#
-load("EMIF/Fit_EMIF_MCI_EN_CSFbio.RData")
-testPred <- predict(fit, X_test, type = "prob")
 
-load("EMIF/Fit_EMIF_MCI_EN_CSFbioonly.RData")
-testPred_wo <- predict(fit_wo, X_test, type = "prob")
-
-roc_test <- pROC::roc(Y_test$Y, testPred$MCI)
-roc_test_wo <- pROC::roc(Y_test$Y, testPred_wo$MCI)
-pROC::roc.test(roc_test, roc_test_wo)
-
-
-load("EMIF/Fit_EMIF_MCI_RF_CSF_PGS.RData")
+# Load models and predictions
+load("Models/EMIF_Models/PGS_CSF_AD/Fit_EMIF_MCI_RF_CSF_PGS.RData")
 RF <- predict(fit, X_test, type = "prob")
 
-load("EMIF/Fit_EMIF_MCI_EN_CSF_PGS.RData")
+load("Models/EMIF_Models/PGS_CSF_AD/Fit_EMIF_MCI_EN_CSF_PGS.RData")
 EN <- predict(fit, X_test, type = "prob")
 
-load("EMIF/Fit_EMIF_MCI_sPLS_CSF_PGS.RData")
+load("Models/EMIF_Models/PGS_CSF_AD/Fit_EMIF_MCI_sPLS_CSF_PGS.RData")
 sPLS <- predict(fit, X_test, type = "prob")
 
-load("EMIF/Fit_EMIF_MCI_RF_CSF_PGSonly.RData")
+load("Models/EMIF_Models/PGS_CSF_AD/Fit_EMIF_MCI_RF_CSF_PGSonly.RData")
 RFonly <- predict(fit, X_test, type = "prob")
 
-load("EMIF/Fit_EMIF_MCI_EN_CSF_PGSonly.RData")
+load("Models/EMIF_Models/PGS_CSF_AD/Fit_EMIF_MCI_EN_CSF_PGSonly.RData")
 ENonly <- predict(fit, X_test, type = "prob")
 
-load("EMIF/Fit_EMIF_MCI_sPLS_CSF_PGSonly.RData")
+load("Models/EMIF_Models/PGS_CSF_AD/Fit_EMIF_MCI_sPLS_CSF_PGSonly.RData")
 sPLSonly <- predict(fit, X_test, type = "prob")
 
 
-
+# Combine predictions into a dataframe
 plotDF <- data.frame(EN = EN$MCI,
                      sPLS = sPLS$MCI,
                      RF = RF$MCI,
@@ -480,5 +480,6 @@ p <- ggplot(ROCplot) +
                                      size = 10,
                                      face = "italic"))
 
+# Save plot
 ggsave(p, file = "EMIF/ROC_MCI_EMIF_CSF_PGSs.png", width = 7, height = 5)
-save(p, file = "EMIF/ROC_MCI_EMIF_MRS_CSF_APOE.RData")
+
