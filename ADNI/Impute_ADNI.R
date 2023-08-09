@@ -1,3 +1,11 @@
+# ============================================================================ #
+# File: Impute_ADNI.R
+# Author: Jarno Koetsier
+# Date: August 6, 2023
+# Description: Impute low quality methylation values in the ADNI cohort.
+# ============================================================================ #
+
+# Load packages
 library(tidyverse)
 library(caret)
 library(glmnet)
@@ -11,10 +19,11 @@ rm(list = ls())
 cat("\014") 
 
 # Load data
-load("ADNI/methSet_allNorm_ADNI.RData")
-load("ADNI/lumi_dpval_ADNI.RData")
-load("ADNI/MetaData_ADNI.RData")
+load("ADNI/Data/methSet_allNorm_ADNI.RData")
+load("ADNI/Data/lumi_dpval_ADNI.RData")
+load("ADNI/Data/MetaData_ADNI.RData")
 
+# Prepare data
 X_ADNI <- methSet_allNorm
 all(colnames(X_ADNI) == colnames(lumi_dpval))
 
@@ -42,6 +51,7 @@ for (j in 1:100){
 }
 
 
+# Perform imputation for different number of principal components (PCs)
 nPCs_CV <- 15
 pred <- matrix(NA, nrow = 100,ncol = nPCs_CV)
 for (p in 3:nPCs_CV){
@@ -56,13 +66,17 @@ for (p in 3:nPCs_CV){
     save(pred, file = "ADNI/pred_imp.RData")
   }
 }
-save(pred, file = "ADNI/pred_imp.RData")
+save(pred, file = "ADNI/Data/pred_imp.RData")
 
-
+# Find optimal number of PCs
 test <- apply(pred,2,function(x) RMSE(obs = values,pred = x))
-optPC <- which.min(test) # 5 PCs
+optPC <- which.min(test)
+
+# Impute the data
 X_ADNI_imp <- imputePCA(t(X_ADNI_mis),ncp = optPC)$completeObs
-save(X_ADNI_imp, file = "ADNI/X_ADNI_imp.RData")
+
+# Save the imputed data
+save(X_ADNI_imp, file = "ADNI/Data/X_ADNI_imp.RData")
 
 
 

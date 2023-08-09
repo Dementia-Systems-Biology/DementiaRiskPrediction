@@ -1,21 +1,30 @@
+# ============================================================================ #
+# File: CalculateMRSs_ADNI.R
+# Author: Jarno Koetsier
+# Date: August 6, 2023
+# Description: Calculate the MRSs in the ADNI cohort.
+# ============================================================================ #
+
+# Load packages
 library(tidyverse)
 library(caret)
-
 
 # Clear workspace and console
 rm(list = ls())
 cat("\014") 
 
 # Load data
-load("EXTEND/finalModels.RData")
-load("ADNI/MetaData_ADNI.RData")
-load("ADNI/X_ADNI_imp.RData")
+load("ADNI/Data/MetaData_ADNI.RData")
+load("ADNI/Data/X_ADNI_imp.RData")
 
 #################################################################################
 
 # EXTEND Models
 
 ################################################################################
+
+# Load MRS models
+load("Models/MRS_Models/finalModels.RData")
 
 # Predict factors
 factors <- names(finalModels)
@@ -125,7 +134,7 @@ out$ID <- row.names(out)
 out <- out[,c(ncol(out),1:(ncol(out)-1))] 
 colnames(out) <- c("ID", "EpiAge", "Alcohol", "BMI", "BodyFat", "HDL", "Smoking", "WHR")
 
-
+# Prepare MRS data frame
 predictedScore_factors <- cbind.data.frame(predictedScore_factors,
                                            out[,c("EpiAge",
                                                   "Alcohol",
@@ -133,12 +142,5 @@ predictedScore_factors <- cbind.data.frame(predictedScore_factors,
                                                   "HDL",
                                                   "Smoking")])
 
-save(predictedScore_factors, file = "ADNI/predictedScore_factors_ADNI.RData")
-
-
-rownames(metaData_all) <- metaData_all$Basename
-samples <- intersect(rownames(metaData_all), rownames(predictedScore_factors))
-
-# Validate education
-plot(metaData_all[samples,"EDUCYRS"], predictedScore_factors[samples, "Education"])
-cor.test(metaData_all[samples,"EDUCYRS"], predictedScore_factors[samples, "Education"])
+# Save MRSs
+save(predictedScore_factors, file = "ADNI/Data/predictedScore_factors_ADNI.RData")

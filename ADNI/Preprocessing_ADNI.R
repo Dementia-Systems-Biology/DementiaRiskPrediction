@@ -1,6 +1,9 @@
-# File: PreProcessing_ADNI.R
+# ============================================================================ #
+# File: Preprocessing_ADNI.R
 # Author: Jarno Koetsier
-# Date: November 27, 2022
+# Date: August 6, 2023
+# Description: Pre-processing of the DNA methylation data of the ADNI cohort.
+# ============================================================================ #
 
 ###############################################################################
 
@@ -30,31 +33,34 @@ library(tidyverse)
 library(ggrepel)
 library(RPMM)
 
-
 # Clear workspace and console
 rm(list = ls())
 cat("\014") 
 
 # Directories
-DataDir <- "ADNI/"
-OutputDir <- "ADNI/"
+DataDir <- "ADNI/Data/"
+OutputDir <- "ADNI/Quality Control/"
 
 # Load data
 load(paste0(DataDir,"RGset_ADNI.RData"))
 load(paste0(DataDir,"RGset_test.RData"))
 load(paste0(DataDir,"MetaData_ADNI.RData"))
 
-
+# Combine RGChannelSets
 RGset_all <- combineArrays(RGset, RGset_test, outType = "IlluminaHumanMethylationEPIC")
-save(RGset_all,file = "RGset_ADNI_all.RData")
+
+# Save data
+save(RGset_all,file = "ADNI/Data/RGset_ADNI_all.RData")
+
 ###############################################################################
 
 # 1. Pre-normalization QC and filtering
 
 ###############################################################################
 
-load("~/ADNI/MetaData_ADNI.RData")
-load("ADNI/RGset_ADNI_all.RData")
+# Load data
+load("ADNI/Data/MetaData_ADNI.RData")
+load("ADNI/Data/RGset_ADNI_all.RData")
 
 #=============================================================================#
 # 1.1. Bisulfite conversion
@@ -189,14 +195,5 @@ gc()
 
 # Get detection p-value
 lumi_dpval <- detectionP(RGset_all, type = "m+u")
-save(lumi_dpval, file = "ADNI/lumi_dpval_ADNI.RData")
-
-
-
-
-
-
-
-
-
+save(lumi_dpval, file = "ADNI/Data/lumi_dpval_ADNI.RData")
 
