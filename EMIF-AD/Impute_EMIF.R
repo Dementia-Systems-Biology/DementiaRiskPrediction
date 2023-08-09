@@ -1,3 +1,11 @@
+# ============================================================================ #
+# File: Impute_EMIF.R
+# Author: Jarno Koetsier
+# Date: August 6, 2023
+# Description: Impute low quality methylation values in the EMIF-AD cohort.
+# ============================================================================ #
+
+# Load packages
 library(tidyverse)
 library(caret)
 library(glmnet)
@@ -10,12 +18,10 @@ library(missMDA)
 rm(list = ls())
 cat("\014") 
 
-
 # Load data
-load("~/EMIF/lumi_dpval_EMIF.RData")
-load("~/EMIF/X_EMIF.RData")
-load("~/EMIF/metaData_EMIF.RData")
-#load("~/allModels.RData")
+load("EMIF-AD/Data/lumi_dpval_EMIF.RData")
+load("EMIF-AD/Data/X_EMIF.RData")
+load("EMIF-AD/Data/metaData_EMIF.RData")
 
 # optimize imputation
 X_EMIF_M <- log2(X_EMIF/(1-X_EMIF))
@@ -40,9 +46,10 @@ for (j in 1:100){
   X_EMIF_copy[removeProbes[j,1], removeProbes[j,2]] <- NA
 }
 
+# Perform imputation for different number of principal components (PCs)
 nPCs_CV <- 15
 pred <- matrix(NA, nrow = 100,ncol = nPCs_CV)
-for (p in 9:nPCs_CV){
+for (p in 1:nPCs_CV){
   
   # Impute missing values
   set.seed(123)
@@ -52,15 +59,19 @@ for (p in 9:nPCs_CV){
   for (j in 1:100){
     pred[j,p] <- X_EMIF_imp_CV[removeProbes[j,2], removeProbes[j,1]]
   }
-  save(pred, file = "EMIF/predImp.RData")
+  save(pred, file = "EMIF-AD/Data/predImp.RData")
 }
 
-
-load("EMIF/predImp.RData")
+# Find optimal number of PCs
+load("EMIF-AD/Data/predImp.RData")
 test <- apply(pred,2,function(x) MAE(obs = values,pred = x))
-optPC <- which.min(test) # 12 PCs
+optPC <- which.min(test)
+
+# Impute the data
 X_EMIF_imp <- imputePCA(t(X_EMIF_mis),ncp = optPC)$completeObs
-save(X_EMIF_imp, file = "EMIF/X_EMIF_imp.RData")
+
+# Save the imputed data
+save(X_EMIF_imp, file = "EMIF-AD/Data/X_EMIF_imp.RData")
 
 
 

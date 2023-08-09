@@ -1,3 +1,11 @@
+# ============================================================================ #
+# File: ValidateMRSs_EMIF.R
+# Author: Jarno Koetsier
+# Date: August 6, 2023
+# Description: Validate the performance of the MRSs in the EMIF-AD cohort.
+# ============================================================================ #
+
+# Load packages
 library(tidyverse)
 library(caret)
 library(pROC)
@@ -7,11 +15,10 @@ rm(list = ls())
 cat("\014") 
 
 # Load data
-load("EMIF/metaData_fil.RData")
-load("EMIF/predictedScore_factors_fil.RData")
+load("EMIF-AD/Data/metaData_fil.RData")                # Meta data
+load("EMIF-AD/Data/predictedScore_factors_fil.RData")  # MRSs
 
-
-
+# Prepare data
 PhenoNames <- c("Hypertension", "Alcohol Consumption", "Cardiovascular Disease",
                 "Depression", "Years of Education", "Smoking Status", "Obesity")
 testDF <- metaData_fil[,c("Hypertension", "Alcohol", "CardiovascularDis",
@@ -32,6 +39,8 @@ MRS_names <- c("Systolic blood pressure",
                "BMI",
                "HDL cholesterol",
                "Smoking")
+
+# Get pairwise correlations
 corDF <- NULL
 for (i in 1:ncol(testDF)){
   temp_cor <- apply(predictedScore_factors_fil[,MRS_test],2,function(x){cor(x,as.numeric(testDF[,i]),
@@ -49,6 +58,7 @@ for (i in 1:ncol(testDF)){
 corDF$FDR <- p.adjust(corDF$Pvalue, method = "fdr")
 corDF$Sig <- ifelse(corDF$FDR< 0.05, "Yes", "No")
 
+# Make correlation plot
 p <- ggplot(corDF) +
   geom_tile(aes(x = MRS, y = Pheno, fill = Cor, color = Sig),
             stat = "identity", width = 0.9, height = 0.9, size = 0.5) +
@@ -71,12 +81,11 @@ p <- ggplot(corDF) +
   guides(color = "none")
 
 
-ggsave(p, file = "EMIF/EMIF_Correlations_MRS.png", width = 7, height = 6)
+# Save plot
+ggsave(p, file = "EMIF-AD/ModelPerformance/EMIF_Correlations_MRS.png", width = 7, height = 6)
 
 
-
-
-
+# Prepare data for AUROC calculation
 temp <- metaData_fil
 temp$Alcohol <- ifelse(temp$Smoking == 0, 0,1)
 temp$Smoking <- ifelse(temp$Smoking == 0, 0,1)
@@ -89,6 +98,8 @@ aucValue <- rep(NA, nrow(test))    # AUC
 liValue <- rep(NA, nrow(test))     # lower interval value of AUC
 uiValue <- rep(NA, nrow(test))     # upper interval value of AUC
 
+
+# Get AUROC for each risk factor
 factorName <- c("Depression", "Hypertension", "Alcohol Consumption", "Smoking Status", "Education", "Cardiovascular Disease", "Obesity")
 for (i in 1:nrow(test)){
   r <- pROC::roc(temp[,test$Pheno[i]], predictedScore_factors_fil[, test$MRS[i]])
@@ -109,7 +120,7 @@ plotAUC <- data.frame(AUC = paste0("AUROC = ",aucValue, " (", liValue, "-", uiVa
 
 ROCplot$Name <- factor(ROCplot$Name, levels = factorName)
 
-
+# Make plot
 p <- ggplot(ROCplot) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed", size = 2) +
   geom_path(aes(y = Sensitivity, x = 1- Specificity,
@@ -128,7 +139,5 @@ p <- ggplot(ROCplot) +
                                      size = 10,
                                      face = "italic"))
 
-ggsave(p, file = "EMIF/ROC_factors_EMIF.png", width = 8, height = 5)
-
-test <- roc(metaData_fil$Depression, predictedScore_factors_fil$Depression)
-plot(test)
+# Save plot
+ggsave(p, file = "EMIF-AD/ModelPerformance/ROC_factors_EMIF.png", width = 8, height = 5)

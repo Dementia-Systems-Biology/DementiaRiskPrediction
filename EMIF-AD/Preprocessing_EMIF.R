@@ -1,3 +1,10 @@
+# ============================================================================ #
+# File: Preprocessing_EMIF.R
+# Author: Jarno Koetsier
+# Date: August 6, 2023
+# Description: Pre-processing of the DNA methylation data of the EMIF-AD cohort.
+# ============================================================================ #
+
 # Load packages
 library(minfi)
 library(wateRmelon)
@@ -10,8 +17,8 @@ rm(list = ls())
 cat("\014") 
 
 # Directories
-DataDir <- "EMIF/"
-OutputDir <- "EMIF/"
+DataDir <- "EMIF-AD/Data/"
+OutputDir <- "EMIF-AD/Quality Control/"
 
 # Load data
 load(paste0(DataDir,"RGset_EMIF1.RData"))
@@ -19,12 +26,14 @@ load(paste0(DataDir,"RGset_EMIF2.RData"))
 load(paste0(DataDir,"RGset_EMIF3.RData"))
 load(paste0(DataDir,"RGset_EMIF4.RData"))
 
+# Combine RGChannelSets
 RGset_all <- combineArrays(RGset_EMIF1, RGset_EMIF2,
                            outType = "IlluminaHumanMethylationEPIC")
 RGset_all1 <- combineArrays(RGset_EMIF3, RGset_EMIF4,
                            outType = "IlluminaHumanMethylationEPIC")
 
-save(RGset_all, RGset_all1,file = "EMIF/RGset_EMIF_all.RData")
+# Save RGChannelSets
+save(RGset_all, RGset_all1,file = "EMIF-AD/Data/RGset_EMIF_all.RData")
 
 ###############################################################################
 
@@ -32,8 +41,9 @@ save(RGset_all, RGset_all1,file = "EMIF/RGset_EMIF_all.RData")
 
 ###############################################################################
 
-load("EMIF/metaData_EMIF.RData")
-load("EMIF/RGset_EMIF_all.RData")
+# Load data
+load("EMIF-AD/Data/metaData_EMIF.RData")
+load("EMIF-AD/Data/RGset_EMIF_all.RData")
 
 #=============================================================================#
 # 1.1. Bisulfite conversion
@@ -308,7 +318,7 @@ pcaList <-  prcomp(t(X_EMIF[rowSums(lumi_dpval > 0.01) == 0,]),
                    rank. = 10)
 
 # Save pcaList object
-save(pcaList, file = "EMIF/pcaList_EMIF.RData")
+save(pcaList, file = "EMIF-AD/Data/pcaList_EMIF.RData")
 
 # Get PCA scores
 PCAscores <- as.data.frame(pcaList$x)
@@ -331,17 +341,21 @@ p_12 <- ggplot(data = PCAscores, aes(x = PC1, y = PC2)) +
         legend.position = "bottom",
         legend.title = element_text())
 
-ggsave(p_12, file = "EMIF/PCA_EMIF.png", width = 8, height = 6)
+# Save PCA plot
+ggsave(p_12, file = "EMIF-AD/ModelPerformance/PCA_EMIF.png", width = 8, height = 6)
 
-# 1 outlier removed
+# Remove outlier
 keepSamples <- rownames(PCAscores)[PCAscores$PC1 > -2500]
 X_EMIF <- X_EMIF[,keepSamples]
 lumi_dpval <- lumi_dpval[,keepSamples]
 
+# Repeat PCA procedure again until no outliers remain
+
+# Save filtered data
 save(X_EMIF, file = paste0(DataDir,"X_EMIF.RData"))
 save(lumi_dpval, file = paste0(DataDir,"lumi_dpval_EMIF.RData"))
-  
+
+# Save meta data
 metaData_EMIF <- read_csv("EMIF/EMIF_metadata.csv")
 save(metaData_EMIF, file = "EMIF/metaData_EMIF.RData")
-samples <- intersect(colnames(X_EMIF), metaData_EMIF$X)
 

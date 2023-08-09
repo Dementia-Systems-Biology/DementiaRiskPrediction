@@ -1,3 +1,9 @@
+# ============================================================================ #
+# File: CalculateMRSs_EMIF.R
+# Author: Jarno Koetsier
+# Date: August 6, 2023
+# Description: Calculate the MRSs in the EMIF-AD cohort
+# ============================================================================ #
 
 # Load packages
 library(tidyverse)
@@ -8,8 +14,8 @@ rm(list = ls())
 cat("\014") 
 
 # Load data
-load("EMIF/metaData_EMIF.RData")
-load("EMIF/X_EMIF_imp.RData")
+load("EMIF-AD/Data/metaData_EMIF.RData")  # Meta data
+load("EMIF-AD/Data/X_EMIF_imp.RData")     # Imputed methylation data
 
 
 #################################################################################
@@ -19,7 +25,7 @@ load("EMIF/X_EMIF_imp.RData")
 ################################################################################
 
 # Load EXTEND models
-load("EMIF/finalModels.RData")
+load("Models/MRS_Models/finalModels.RData")
 
 # Predict factors
 factors <- names(finalModels)
@@ -54,7 +60,7 @@ predictedScore_factors <- as.data.frame(predictedScore_factors)
 
 # Read models
 # Models are available at: https://zenodo.org/record/4646300#.ZFJg53ZBxPY
-cpgs <- read.csv("Data/Predictors_Shiny_by_Groups.csv", header = T) 
+cpgs <- read.csv("Models/MRS_Models/Predictors_Shiny_by_Groups.csv", header = T) 
 
 # Load data
 data <- X_EMIF_imp
@@ -137,5 +143,6 @@ predictedScore_factors <- cbind.data.frame(predictedScore_factors,
                                                   "HDL",
                                                   "Smoking")])
 
-save(predictedScore_factors, file = "EMIF/predictedScore_factors_EMIF.RData")
+# Save MRSs
+save(predictedScore_factors, file = "EMIF-AD/Data/predictedScore_factors_EMIF.RData")
 
