@@ -1,6 +1,10 @@
-# File: PreProcessing_ADNI.R
+# ============================================================================ #
+# File: Preprocessing_PPMI.R
 # Author: Jarno Koetsier
-# Date: November 27, 2022
+# Date: August 6, 2023
+# Description: Pre-processing of the DNA methylation data of the PPMI cohort.
+# ============================================================================ #
+
 
 ###############################################################################
 
