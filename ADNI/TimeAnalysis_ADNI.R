@@ -2,7 +2,7 @@
 # File: TimeAnalysis_ADNI.R
 # Author: Jarno Koetsier
 # Date: August 6, 2023
-# Description: Calculate the MRSs in the ADNI cohort.
+# Description: Perform survival (time) analysis in the ADNI cohort.
 # ============================================================================ #
 
 # Load packages
@@ -76,13 +76,13 @@ p <- ggplot(predictDF) +
 ggsave(p, file = "ADNI/TimeAnalysis/RiskScoreDistribution_ADNI.png", width = 7, height = 5)
 
 
-
 ###############################################################################
 
 # MMSE
 
 ###############################################################################
 
+# Prepare data for survival analysis
 var <- "MMSE"
 testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
 testDF <- testDF[!is.na(testDF$MMSE),]
@@ -107,17 +107,15 @@ length(unique(testDF$RID))
 length(unique(metaData_fil_time$RID))
 
 
-kaplanDF <- testDF[,c("RID", "Time", "Status")]
+# Put data into correct format:
 # 1: censored
 # 2: disease
+kaplanDF <- testDF[,c("RID", "Time", "Status")]
 kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
 kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
 kaplanDF$Time <- kaplanDF$Time/12
 
-
-survdiff(Surv(Time, Test) ~ predClass, data = kaplanDF)
-
-
+# Make survival curve
 kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
 p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>% 
   ggsurvfit(size = 1.5) +
@@ -142,17 +140,23 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
                                      size = 10,
                                      face = "italic"))
 
+# Save plot
 ggsave(p, file = "ADNI/TimeAnalysis/KaplanMeier_ADNI_MMSE.jpg", width = 7, height = 5)
 
+# Compare low and high risk
 kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
 kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
+
+# Log rank test
 survdiff(Surv(Time, Test) ~ predClass, 
          data = kaplanDF1)
 
+# Cox regression
 coxph(Surv(Time, Test) ~ predClass, 
       data = kaplanDF1) %>% 
   tbl_regression(exp = TRUE) 
 
+# AUROC
 kaplanDF1$Status <- factor(kaplanDF1$Status, levels = c("Normal", "Cognitive Impaired"))
 test_roc <- pROC::roc(kaplanDF1$Status, kaplanDF1$pred, direction = "<")
 auc(test_roc)
@@ -165,11 +169,10 @@ ci(test_roc)
 
 ###############################################################################
 
+# Prepare data for survival analysis
 var <- "RAVLT.learning"
-
 testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
 testDF <- testDF[!is.na(testDF[,var]),]
-
 sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var])
 mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var])
 
@@ -194,18 +197,15 @@ testDF <- rbind.data.frame(testDF, normal)
 length(unique(testDF$RID))
 length(unique(metaData_fil_time$RID))
 
-
-kaplanDF <- testDF[,c("RID", "Time", "Status")]
+# Put data into correct format:
 # 1: censored
 # 2: disease
+kaplanDF <- testDF[,c("RID", "Time", "Status")]
 kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
 kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
 kaplanDF$Time <- kaplanDF$Time/12
 
-
-survdiff(Surv(Time, Test) ~ predClass, data = kaplanDF)
-
-
+# Make survival curve
 kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
 p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>% 
   ggsurvfit(size = 1.5) +
@@ -230,18 +230,23 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
                                      size = 10,
                                      face = "italic"))
 
+# Save plot
 ggsave(p, file = paste0("ADNI/TimeAnalysis/KaplanMeier_ADNI_",var,".jpg"), width = 7, height = 5)
 
-
+# Compare low and high risk
 kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
 kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
+
+# Log rank test
 survdiff(Surv(Time, Test) ~ predClass, 
          data = kaplanDF1)
 
+# Cox regression
 coxph(Surv(Time, Test) ~ predClass, 
       data = kaplanDF1) %>% 
   tbl_regression(exp = TRUE) 
 
+# AUROC
 kaplanDF1$Status <- factor(kaplanDF1$Status, levels = c("Normal", "Cognitive Impaired"))
 test_roc <- pROC::roc(kaplanDF1$Status, kaplanDF1$pred, direction = "<")
 auc(test_roc)
@@ -254,11 +259,10 @@ ci(test_roc)
 
 ###############################################################################
 
+# Prepare data for survival analysis
 var <- "RAVLT.forgetting"
-
 testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
 testDF <- testDF[!is.na(testDF[,var]),]
-
 sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var])
 mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var])
 
@@ -282,18 +286,15 @@ testDF <- rbind.data.frame(testDF, normal)
 length(unique(testDF$RID))
 length(unique(metaData_fil_time$RID))
 
-
-kaplanDF <- testDF[,c("RID", "Time", "Status")]
+# Put data into correct format:
 # 1: censored
 # 2: disease
+kaplanDF <- testDF[,c("RID", "Time", "Status")]
 kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
 kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
 kaplanDF$Time <- kaplanDF$Time/12
 
-
-survdiff(Surv(Time, Test) ~ predClass, data = kaplanDF)
-
-
+# Make survival curve
 kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
 p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>% 
   ggsurvfit(size = 1.5) +
@@ -318,17 +319,24 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
                                      size = 10,
                                      face = "italic"))
 
+# Save plot
 ggsave(p, file = paste0("ADNI/TimeAnalysis/KaplanMeier_ADNI_",var,".jpg"), width = 7, height = 5)
 
+# Compare low and high risk
 kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
 kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
+
+# Log rank test
 survdiff(Surv(Time, Test) ~ predClass, 
          data = kaplanDF1)
 
+# Cox regression
 coxph(Surv(Time, Test) ~ predClass, 
       data = kaplanDF1) %>% 
   tbl_regression(exp = TRUE) 
 
+
+# AUROC
 kaplanDF1$Status <- factor(kaplanDF1$Status, levels = c("Normal", "Cognitive Impaired"))
 test_roc <- pROC::roc(kaplanDF1$Status, kaplanDF1$pred, direction = "<")
 auc(test_roc)
@@ -341,11 +349,10 @@ ci(test_roc)
 
 ###############################################################################
 
+# Prepare data for survival analysis
 var <- "RAVLT.perc.forgetting"
-
 testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
 testDF <- testDF[!is.na(testDF[,var]),]
-
 sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var])
 mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var])
 
@@ -369,18 +376,15 @@ testDF <- rbind.data.frame(testDF, normal)
 length(unique(testDF$RID))
 length(unique(metaData_fil_time$RID))
 
-
-kaplanDF <- testDF[,c("RID", "Time", "Status")]
+# Put data into correct format:
 # 1: censored
 # 2: disease
+kaplanDF <- testDF[,c("RID", "Time", "Status")]
 kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
 kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
 kaplanDF$Time <- kaplanDF$Time/12
 
-
-survdiff(Surv(Time, Test) ~ predClass, data = kaplanDF)
-
-
+# Make survival curve
 kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
 p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>% 
   ggsurvfit(size = 1.5) +
@@ -405,17 +409,23 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
                                      size = 10,
                                      face = "italic"))
 
+# Save plot
 ggsave(p, file = paste0("ADNI/TimeAnalysis/KaplanMeier_ADNI_",var,".jpg"), width = 7, height = 5)
 
+# Compare low and high risk
 kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
 kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
+
+# Log rank test
 survdiff(Surv(Time, Test) ~ predClass, 
          data = kaplanDF1)
 
+# Cox regression
 coxph(Surv(Time, Test) ~ predClass, 
       data = kaplanDF1) %>% 
   tbl_regression(exp = TRUE) 
 
+# AUROC
 kaplanDF1$Status <- factor(kaplanDF1$Status, levels = c("Normal", "Cognitive Impaired"))
 test_roc <- pROC::roc(kaplanDF1$Status, kaplanDF1$pred, direction = "<")
 auc(test_roc)
@@ -427,11 +437,10 @@ ci(test_roc)
 
 ###############################################################################
 
+# Prepare data for survival analysis
 var <- "RAVLT.immediate"
-
 testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
 testDF <- testDF[!is.na(testDF[,var]),]
-
 sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var])
 mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var])
 
@@ -455,18 +464,15 @@ testDF <- rbind.data.frame(testDF, normal)
 length(unique(testDF$RID))
 length(unique(metaData_fil_time$RID))
 
-
-kaplanDF <- testDF[,c("RID", "Time", "Status")]
+# Put data into correct format:
 # 1: censored
 # 2: disease
+kaplanDF <- testDF[,c("RID", "Time", "Status")]
 kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
 kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
 kaplanDF$Time <- kaplanDF$Time/12
 
-
-survdiff(Surv(Time, Test) ~ predClass, data = kaplanDF)
-
-
+# Make survival curve
 kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
 p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>% 
   ggsurvfit(size = 1.5) +
@@ -491,18 +497,23 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
                                      size = 10,
                                      face = "italic"))
 
+# Save plot
 ggsave(p, file = paste0("ADNI/TimeAnalysis/KaplanMeier_ADNI_",var,".jpg"), width = 7, height = 5)
 
-
+# Compare low and high risk
 kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
 kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
+
+# Log rank test
 survdiff(Surv(Time, Test) ~ predClass, 
          data = kaplanDF1)
 
+# Cox regression
 coxph(Surv(Time, Test) ~ predClass, 
       data = kaplanDF1) %>% 
   tbl_regression(exp = TRUE) 
 
+# AUROC
 kaplanDF1$Status <- factor(kaplanDF1$Status, levels = c("Normal", "Cognitive Impaired"))
 test_roc <- pROC::roc(kaplanDF1$Status, kaplanDF1$pred, direction = "<")
 auc(test_roc)
@@ -515,11 +526,10 @@ ci(test_roc)
 
 ###############################################################################
 
+# Prepare data for survival analysis
 var <- "ADASQ4"
-
 testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
 testDF <- testDF[!is.na(testDF[,var]),]
-
 sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var])
 mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var])
 
@@ -543,18 +553,15 @@ testDF <- rbind.data.frame(testDF, normal)
 length(unique(testDF$RID))
 length(unique(metaData_fil_time$RID))
 
-
-kaplanDF <- testDF[,c("RID", "Time", "Status")]
+# Put data into correct format:
 # 1: censored
 # 2: disease
+kaplanDF <- testDF[,c("RID", "Time", "Status")]
 kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
 kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
 kaplanDF$Time <- kaplanDF$Time/12
 
-
-survdiff(Surv(Time, Test) ~ predClass, data = kaplanDF)
-
-
+# Make survival curve
 kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
 p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>% 
   ggsurvfit(size = 1.5) +
@@ -579,33 +586,39 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
                                      size = 10,
                                      face = "italic"))
 
+# Save plot
 ggsave(p, file = paste0("ADNI/TimeAnalysis/KaplanMeier_ADNI_",var,".jpg"), width = 7, height = 5)
 
-
+# Compare low and high risk
 kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
 kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
+
+# Log rank test
 survdiff(Surv(Time, Test) ~ predClass, 
          data = kaplanDF1)
 
+# Cox regression
 coxph(Surv(Time, Test) ~ predClass, 
       data = kaplanDF1) %>% 
   tbl_regression(exp = TRUE) 
 
+# AUROC
 kaplanDF1$Status <- factor(kaplanDF1$Status, levels = c("Normal", "Cognitive Impaired"))
 test_roc <- pROC::roc(kaplanDF1$Status, kaplanDF1$pred, direction = "<")
 auc(test_roc)
 ci(test_roc)
+
+
 ###############################################################################
 
 # ADAS13
 
 ###############################################################################
 
+# Prepare data for survival analysis
 var <- "ADAS13"
-
 testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
 testDF <- testDF[!is.na(testDF[,var]),]
-
 sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var])
 mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var])
 
@@ -629,18 +642,15 @@ testDF <- rbind.data.frame(testDF, normal)
 length(unique(testDF$RID))
 length(unique(metaData_fil_time$RID))
 
-
-kaplanDF <- testDF[,c("RID", "Time", "Status")]
+# Put data into correct format:
 # 1: censored
 # 2: disease
+kaplanDF <- testDF[,c("RID", "Time", "Status")]
 kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
 kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
 kaplanDF$Time <- kaplanDF$Time/12
 
-
-survdiff(Surv(Time, Test) ~ predClass, data = kaplanDF)
-
-
+# Make survival curve
 kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
 p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>% 
   ggsurvfit(size = 1.5) +
@@ -665,33 +675,39 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
                                      size = 10,
                                      face = "italic"))
 
+# Save plot
 ggsave(p, file = paste0("ADNI/TimeAnalysis/KaplanMeier_ADNI_",var,".jpg"), width = 7, height = 5)
 
+# Compare low and high risk
 kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
 kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
+
+# Log rank test
 survdiff(Surv(Time, Test) ~ predClass, 
          data = kaplanDF1)
 
+# Cox regression
 coxph(Surv(Time, Test) ~ predClass, 
       data = kaplanDF1) %>% 
   tbl_regression(exp = TRUE) 
 
-
+# AUROC
 kaplanDF1$Status <- factor(kaplanDF1$Status, levels = c("Normal", "Cognitive Impaired"))
 test_roc <- pROC::roc(kaplanDF1$Status, kaplanDF1$pred, direction = "<")
 auc(test_roc)
 ci(test_roc)
+
+
 ###############################################################################
 
 # ADAS11
 
 ###############################################################################
 
+# Prepare data for survival analysis
 var <- "ADAS11"
-
 testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
 testDF <- testDF[!is.na(testDF[,var]),]
-
 sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var])
 mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var])
 
@@ -715,18 +731,15 @@ testDF <- rbind.data.frame(testDF, normal)
 length(unique(testDF$RID))
 length(unique(metaData_fil_time$RID))
 
-
-kaplanDF <- testDF[,c("RID", "Time", "Status")]
+# Put data into correct format:
 # 1: censored
 # 2: disease
+kaplanDF <- testDF[,c("RID", "Time", "Status")]
 kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
 kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
 kaplanDF$Time <- kaplanDF$Time/12
 
-
-survdiff(Surv(Time, Test) ~ predClass, data = kaplanDF)
-
-
+# Make survival curve
 kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
 p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>% 
   ggsurvfit(size = 1.5) +
@@ -751,32 +764,39 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
                                      size = 10,
                                      face = "italic"))
 
+# Save plot
 ggsave(p, file = paste0("ADNI/TimeAnalysis/KaplanMeier_ADNI_",var,".jpg"), width = 7, height = 5)
 
+# Compare low and high risk
 kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
 kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
+
+# Log rank test
 survdiff(Surv(Time, Test) ~ predClass, 
          data = kaplanDF1)
 
+# Cox regression
 coxph(Surv(Time, Test) ~ predClass, 
       data = kaplanDF1) %>% 
   tbl_regression(exp = TRUE) 
 
+# Log rank test
 kaplanDF1$Status <- factor(kaplanDF1$Status, levels = c("Normal", "Cognitive Impaired"))
 test_roc <- pROC::roc(kaplanDF1$Status, kaplanDF1$pred, direction = "<")
 auc(test_roc)
 ci(test_roc)
+
+
 ###############################################################################
 
 # LDELTOTAL
 
 ###############################################################################
 
+# Prepare data for survival analysis
 var <- "LDELTOTAL"
-
 testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
 testDF <- testDF[!is.na(testDF[,var]),]
-
 sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var])
 mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var])
 
@@ -800,18 +820,15 @@ testDF <- rbind.data.frame(testDF, normal)
 length(unique(testDF$RID))
 length(unique(metaData_fil_time$RID))
 
-
-kaplanDF <- testDF[,c("RID", "Time", "Status")]
+# Put data into correct format:
 # 1: censored
 # 2: disease
+kaplanDF <- testDF[,c("RID", "Time", "Status")]
 kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
 kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
 kaplanDF$Time <- kaplanDF$Time/12
 
-
-survdiff(Surv(Time, Test) ~ predClass, data = kaplanDF)
-
-
+# Make survival curve
 kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
 p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>% 
   ggsurvfit(size = 1.5) +
@@ -836,17 +853,23 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
                                      size = 10,
                                      face = "italic"))
 
+# Save plot
 ggsave(p, file = paste0("ADNI/TimeAnalysis/KaplanMeier_ADNI_",var,".jpg"), width = 7, height = 5)
 
+# Compare low and high risk
 kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
 kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
+
+# Log rank test
 survdiff(Surv(Time, Test) ~ predClass, 
          data = kaplanDF1)
 
+# Cox regression
 coxph(Surv(Time, Test) ~ predClass, 
       data = kaplanDF1) %>% 
   tbl_regression(exp = TRUE) 
 
+# AUROC
 kaplanDF1$Status <- factor(kaplanDF1$Status, levels = c("Normal", "Cognitive Impaired"))
 test_roc <- pROC::roc(kaplanDF1$Status, kaplanDF1$pred, direction = "<")
 auc(test_roc)
@@ -858,11 +881,10 @@ ci(test_roc)
 
 ###############################################################################
 
+# Prepare data for survival analysis
 var <- "TRABSCOR"
-
 testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
 testDF <- testDF[!is.na(testDF[,var]),]
-
 sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var], na.rm = TRUE)
 mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var], na.rm = TRUE)
 
@@ -886,18 +908,15 @@ testDF <- rbind.data.frame(testDF, normal)
 length(unique(testDF$RID))
 length(unique(metaData_fil_time$RID))
 
-
-kaplanDF <- testDF[,c("RID", "Time", "Status")]
+# Put data into correct format:
 # 1: censored
 # 2: disease
+kaplanDF <- testDF[,c("RID", "Time", "Status")]
 kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
 kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
 kaplanDF$Time <- kaplanDF$Time/12
 
-
-survdiff(Surv(Time, Test) ~ predClass, data = kaplanDF)
-
-
+# Make survival curve
 kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
 p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>% 
   ggsurvfit(size = 1.5) +
@@ -922,18 +941,23 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
                                      size = 10,
                                      face = "italic"))
 
+# Save plot
 ggsave(p, file = paste0("ADNI/TimeAnalysis/KaplanMeier_ADNI_",var,".jpg"), width = 7, height = 5)
 
+# Compare low and high risk
 kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
 kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
+
+# Log rank test
 survdiff(Surv(Time, Test) ~ predClass, 
          data = kaplanDF1)
 
+# Cox regression
 coxph(Surv(Time, Test) ~ predClass, 
       data = kaplanDF1) %>% 
   tbl_regression(exp = TRUE) 
 
-
+# AUROC
 kaplanDF1$Status <- factor(kaplanDF1$Status, levels = c("Normal", "Cognitive Impaired"))
 test_roc <- pROC::roc(kaplanDF1$Status, kaplanDF1$pred, direction = "<")
 auc(test_roc)
