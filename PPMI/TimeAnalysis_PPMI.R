@@ -1,12 +1,9 @@
-
-
-
-###############################################################################
-
-# Kaplan-Meier
-
-###############################################################################
-
+# ============================================================================ #
+# File: TimeAnalysis_PPMI.R
+# Author: Jarno Koetsier
+# Date: August 6, 2023
+# Description: Perform survival (time) analysis in the PPMI cohort.
+# ============================================================================ #
 
 # Load packages
 library(survival)
@@ -27,10 +24,10 @@ rm(list = ls())
 cat("\014") 
 
 # Load data
-cogcat <- read.csv("PPMI/CogCatWide_Filtered.csv")
-cogcat$PATNO <- as.character(cogcat$PATNO)
-load("PPMI/predictedScore_factors_PPMI.RData")
-load("PPMI/metaData_ppmi.RData")
+cogcat <- read.csv("PPMI/Data/CogCatWide_Filtered.csv") # Diagnosis over time
+cogcat$PATNO <- as.character(cogcat$PATNO)         
+load("PPMI/Data/predictedScore_factors_PPMI.RData")     # MRSs
+load("PPMI/Data/metaData_ppmi.RData")                   # Meta data
 
 # Remove reverters
 reverters <- cogcat
@@ -60,12 +57,15 @@ test <- inner_join(metaData_fil, cogcat, by = c("PATNO" = "PATNO"))
 table(test$Class, test$CogDecon)
 predictedScore_factors_fil <- predictedScore_factors_fil[test$Basename,]
 
-# make predictions
-load("~/Data/Fit_EMIF_MCI_RF.RData")
+# make predictions:
+
+# Load epi-MCI model (RF-RFE)
+load("Models/EMIF_Models/MRS/Fit_EMIF_MCI_RF.RData")
+
+# Make predictions
 pred_RF <- predict(fit, predictedScore_factors_fil, type = "prob")
 predictDF <- data.frame(PATNO = test$PATNO, 
                         pred = pred_RF$MCI)
-
 
 # Split into three classes
 predictDF$predClass <- "Intermediate risk"
@@ -85,8 +85,8 @@ p <- ggplot(predictDF) +
   theme(legend.position = "bottom",
         legend.title = element_blank())
 
-ggsave(p, file = "PPMI/RiskScoreDistribution.png", width = 7, height = 5)
-
+# Save plot
+ggsave(p, file = "PPMI/TimeAnalysis/RiskScoreDistribution.png", width = 7, height = 5)
 
 # Prepare data into correct format for survival analysis
 testDF <- gather(as.data.frame(cogcat[,3:11]))
@@ -110,12 +110,12 @@ testDF <- rbind.data.frame(testDF, normal)
 length(unique(cogcat$PATNO))
 
 
-kaplanDF <- testDF[,c("PATNO", "Time", "Status")]
+# Put data into correct format:
 # 1: censored
 # 2: disease
+kaplanDF <- testDF[,c("PATNO", "Time", "Status")]
 kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
 kaplanDF <- inner_join(kaplanDF, predictDF, by = c("PATNO" = "PATNO"))
-
 
 # Make kaplan-meier curve
 kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
@@ -129,7 +129,6 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
   xlab("Follow-up time (years)") +
   scale_x_continuous(breaks = c(0,2,4,6,8)) +
   ggtitle("Dementia/MCI") +
-  #xlim(c(0,8)) +
   theme(legend.title = element_blank(),
         legend.position = "bottom",
         axis.title = element_text(size = 12),
@@ -142,18 +141,23 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
                                      size = 10,
                                      face = "italic"))
 
+# Save plot
 ggsave(p, file = "KaplanMeier_PPMI_MRSonly.jpg", width = 7, height = 5)
 
+# Compare low and high risk
 kaplanDF1 <- kaplanDF[kaplanDF$predClass != "Intermediate risk",]
 kaplanDF1$predClass <- factor(kaplanDF1$predClass, levels = c("Low risk", "High risk"))
+
+# Log rank test
 survdiff(Surv(Time, Test) ~ predClass, 
          data = kaplanDF1)
 
+# Cox regression
 coxph(Surv(Time, Test) ~ predClass + Age, 
          data = kaplanDF) %>% 
   tbl_regression(exp = TRUE) 
 
-
+# AUROC
 kaplanDF$Status1 <- factor(kaplanDF$Status, levels = c("Normal", "Cognitive Impaired"))
 test_roc <- pROC::roc(kaplanDF$Status1, kaplanDF$pred)
 ci(test_roc)

@@ -69,10 +69,11 @@ for (p in 3:nPCs_CV){
 save(pred, file = "ADNI/Data/pred_imp.RData")
 
 # Find optimal number of PCs
-test <- apply(pred,2,function(x) RMSE(obs = values,pred = x))
+test <- apply(pred,2,function(x) MAE(obs = values,pred = x))
 optPC <- which.min(test)
 
 # Impute the data
+set.seed(123)
 X_ADNI_imp <- imputePCA(t(X_ADNI_mis),ncp = optPC)$completeObs
 
 # Save the imputed data

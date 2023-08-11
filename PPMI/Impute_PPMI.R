@@ -1,3 +1,9 @@
+# ============================================================================ #
+# File: Impute_PPMI.R
+# Author: Jarno Koetsier
+# Date: August 6, 2023
+# Description: Impute low quality methylation values in the PPMI cohort.
+# ============================================================================ #
 
 # Load packages
 library(tidyverse)
@@ -13,10 +19,11 @@ rm(list = ls())
 cat("\014") 
 
 # Load data
-load("~/PPMI/lumi_dpval_PPMI.RData")
-load("~/PPMI/methSet_allNorm_PPMI.RData")
-load("~/PPMI/metaData_ppmi.RData")
+load("PPMI/Data/lumi_dpval_PPMI.RData")
+load("PPMI/Data/methSet_allNorm_PPMI.RData")
+load("PPMI/Data/metaData_ppmi.RData")
 
+# Prepare data
 X_PPMI <- methSet_allNorm
 all(colnames(X_PPMI) == colnames(lumi_dpval))
 
@@ -43,11 +50,10 @@ for (j in 1:100){
   X_PPMI_copy[removeProbes[j,1], removeProbes[j,2]] <- NA
 }
 
-
-
+# Perform imputation for different number of principal components (PCs)
 nPCs_CV <- 10
 pred <- matrix(NA, nrow = 100,ncol = nPCs_CV)
-for (p in 3:nPCs_CV){
+for (p in 1:nPCs_CV){
   
   # Impute missing values
   set.seed(123)
@@ -57,18 +63,19 @@ for (p in 3:nPCs_CV){
   for (j in 1:100){
     pred[j,p] <- X_PPMI_imp_CV[removeProbes[j,2], removeProbes[j,1]]
   }
-  save(pred, file = "PPMI/pred_imp.RData")
+  save(pred, file = "PPMI/Data/pred_imp.RData")
 }
+save(pred, file = "PPMI/Data/pred_imp.RData")
 
-# Evaluate which number of PCs is the best
-load("PPMI/pred_imp.RData")
+# Evaluate which number of PCs is the best (lowest MAE)
+load("PPMI/Data/pred_imp.RData")
 test <- apply(pred,2,function(x) MAE(obs = values,pred = x))
 optPC <- which.min(test) # 5 PCs
 
 # Perform imputation using optimal number of PCs
 set.seed(123)
 X_PPMI_imp <- imputePCA(t(X_PPMI_mis),ncp = optPC)$completeObs
-save(X_PPMI_imp, file = "PPMI/X_PPMI_imp.RData")
+save(X_PPMI_imp, file = "PPMI/Data/X_PPMI_imp.RData")
 
 
 

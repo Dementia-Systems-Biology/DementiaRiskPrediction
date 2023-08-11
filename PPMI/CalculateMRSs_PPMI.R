@@ -1,21 +1,30 @@
+# ============================================================================ #
+# File: CalculateMRSs_PPMI.R
+# Author: Jarno Koetsier
+# Date: August 6, 2023
+# Description: Calculate the MRSs in the PPMI cohort.
+# ============================================================================ #
+
+# Load packages
 library(tidyverse)
 library(caret)
-
 
 # Clear workspace and console
 rm(list = ls())
 cat("\014") 
 
 # Load data
-load("EXTEND/finalModels.RData")
-load("PPMI/metaData_ppmi.RData")
-load("PPMI/X_PPMI_imp.RData")
+load("PPMI/Data/metaData_ppmi.RData")
+load("PPMI/Data/X_PPMI_imp.RData")
 
 #################################################################################
 
 # EXTEND Models
 
 ################################################################################
+
+# Load MRS models
+load("Models/MRS_Models/finalModels.RData")
 
 # Predict factors
 factors <- names(finalModels)
@@ -125,7 +134,7 @@ out$ID <- row.names(out)
 out <- out[,c(ncol(out),1:(ncol(out)-1))] 
 colnames(out) <- c("ID", "EpiAge", "Alcohol", "BMI", "BodyFat", "HDL", "Smoking", "WHR")
 
-
+# Combine MRSs in a dataframe
 predictedScore_factors <- cbind.data.frame(predictedScore_factors,
                                            out[,c("EpiAge",
                                                   "Alcohol",
@@ -133,13 +142,6 @@ predictedScore_factors <- cbind.data.frame(predictedScore_factors,
                                                   "HDL",
                                                   "Smoking")])
 
-save(predictedScore_factors, file = "PPMI/predictedScore_factors_PPMI.RData")
-
-
-rownames(metaData_all) <- metaData_all$Basename
-samples <- intersect(rownames(metaData_all), rownames(predictedScore_factors))
-
-# Validate education
-plot(metaData_all[samples,"EDUCYRS"], predictedScore_factors[samples, "Education"])
-cor.test(metaData_all[samples,"EDUCYRS"], predictedScore_factors[samples, "Education"])
+# Save data
+save(predictedScore_factors, file = "PPMI/Data/predictedScore_factors_PPMI.RData")
                      

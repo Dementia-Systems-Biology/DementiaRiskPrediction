@@ -12,17 +12,6 @@
 
 ###############################################################################
 
-# Prepare meta data
-metaData <- read.delim("PPMI/PPMI_data.tsv")
-metaData$PATNO <- as.character(metaData$ID)
-length(unique(metaData$PATNO))
-
-load("~/PPMI/RGset_PPMI.RData")
-metaData_IDs <- as.data.frame(RGSet@colData)[,1:9]
-metaData_IDs$PATNO <- as.character(metaData_IDs$PATNO)
-
-metaData_all <- inner_join(metaData, metaData_IDs, by = c("PATNO" = "PATNO"))
-save(metaData_all, file = "PPMI/metaData_ppmi.RData")
 
 # Install Bioconductor packages
 BiocManager::install(c("minfi", 
@@ -45,18 +34,27 @@ library(wateRmelon)
 library(tidyverse)
 library(ggrepel)
 
-
 # Clear workspace and console
 rm(list = ls())
 cat("\014") 
 
 # Directories
-DataDir <- "PPMI/"
-OutputDir <- "PPMI/"
+DataDir <- "PPMI/Data/"
+OutputDir <- "PPMI/Quality Control/"
 
-# Load data
+# Load DNA methylation data
 load(paste0(DataDir,"RGset_PPMI.RData"))
-load(paste0(DataDir,"metaData_ppmi.RData"))
+
+# Prepare meta data
+metaData <- read.delim("PPMI/Data/PPMI_data.tsv")
+metaData$PATNO <- as.character(metaData$ID)
+length(unique(metaData$PATNO))
+
+metaData_IDs <- as.data.frame(RGSet@colData)[,1:9]
+metaData_IDs$PATNO <- as.character(metaData_IDs$PATNO)
+metaData_all <- inner_join(metaData, metaData_IDs, by = c("PATNO" = "PATNO"))
+save(metaData_all, file = "PPMI/Data/metaData_ppmi.RData")
+
 
 ###############################################################################
 
@@ -87,6 +85,7 @@ bisulfiteConv <- ggplot(bsc, aes(x = bsc)) +
                                   face = "bold",
                                   size = 16))
 
+# Save plot
 ggsave(bisulfiteConv, file = paste0(OutputDir,"bisulfiteConv_PPMI.png"), height = 6, width = 8)
 
 #=============================================================================#
@@ -194,13 +193,5 @@ load(paste0(DataDir,"methSet_allNorm_PPMI.RData"))
 # Get detection p-value
 lumi_dpval <- detectionP(RGSet, type = "m+u")
 save(lumi_dpval, file = paste0(DataDir,"lumi_dpval_PPMI.RData"))
-
-
-
-
-
-
-
-
 
 
