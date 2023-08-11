@@ -1,3 +1,10 @@
+# ============================================================================ #
+# File: ColocAnalysis.R
+# Author: Jarno Koetsier
+# Date: August 6, 2023
+# Description: Perform colocalization analysis.
+# ============================================================================ #
+
 # Clear workspace and console
 rm(list = ls())
 cat("\014") 
@@ -14,7 +21,7 @@ AD_summary <- as.data.frame(AD_summary)
 rownames(AD_summary) <- AD_summary$SNP
 
 # Get CpGs of each model
-load("~/selCpGs.RData")
+load("Models/ModelInterpretation/selCpGs.RData")
 
 results_all <- NULL
 # For each model...
@@ -87,10 +94,14 @@ for (i in 6:length(selCpGs)){
     }
   }
 }
-save(results_all, file = "coloc_results1.RData")
 
-load("coloc_results1.RData")
+# Save colocalization analysis results
+save(results_all, file = "Models/ModelInterpretation/Coloc/coloc_results1.RData")
 
+# Load results (if needed)
+load("Models/ModelInterpretation/Coloc/coloc_results1.RData")
+
+# Change model names
 results_all$Model[results_all$Model == "Alcohol"] <- "Alcohol consumption"
 results_all$Model[results_all$Model == "Depression"] <- "Depression"
 results_all$Model[results_all$Model == "Diabetes"] <- "Type II diabetes"
@@ -102,26 +113,30 @@ results_all$Model[results_all$Model == "Physical"] <- "Phsyical inactivity"
 results_all$Model[results_all$Model == "SexMale"] <- "Sex"
 results_all$Model[results_all$Model == "SysBP"] <- "Syst. blood pressure"
 
+# Get p-value
 results_all$pvalue = 1-(results_all$PP.H4.abf + results_all$PP.H3.abf)
+
+# Calculate FDR-adjusted p-value
 results_all$FDR <- p.adjust(results_all$pvalue, method = "fdr")
 results_all$Sig <- ifelse(results_all$FDR < 0.05, "Yes", "No")
 
-load("~/Data/Probe2Gene_final_ann.RData")
-
+# Load probe annotation
+load("Models/ModelInterpretation/Probe2Gene_final_ann.RData")
 Probe2Gene <- Probe2Gene_final %>%
   group_by(CpG) %>%
   summarise(CpG = CpG,
             Genes = paste0(Gene))
 
 Probe2Gene <- Probe2Gene[!duplicated(Probe2Gene),]
+
+# Combine probe annotation with coloc results
 results_all_ann <- left_join(results_all, Probe2Gene,
                               by = c("CpG" = "CpG"))
-
 results_all_ann$pvalue = 1-(results_all_ann$PP.H4.abf + results_all_ann$PP.H3.abf)
 results_all_ann$FDR <- p.adjust(results_all_ann$pvalue, method = "fdr")
 results_all_ann$Sig <- ifelse(results_all_ann$FDR < 0.05, "Yes", "No")
 
-
+# Make manhattan-like plot
 set.seed(456)
 p <- ggplot(results_all) +
   geom_point(aes(x = Model, y = -log10(pvalue+10^-10), color = Model), 
@@ -130,9 +145,9 @@ p <- ggplot(results_all) +
              position = position_jitter(width = 0.3, seed = 123), 
              shape = 1, color = "#737373", size = 2.5) +
   #geom_text_repel(data = results_all_ann[results_all_ann$FDR < 0.05,],
-   #               aes(x = Model, y = 1-pvalue, 
-   #                   label = paste0(CpG, " (",Genes, ")")), max.overlaps = 100,
-    #              size = 3, color = "#737373", fontface = "italic") + 
+  #                aes(x = Model, y = 1-pvalue, 
+  #                    label = paste0(CpG, " (",Genes, ")")), max.overlaps = 100,
+  #                     size = 3, color = "#737373", fontface = "italic") + 
   ylab("-log10 p-value (H3 + H4)") +
   xlab(NULL) +
   theme_classic() +
@@ -141,19 +156,10 @@ p <- ggplot(results_all) +
   scale_color_manual(values = rep(c("#FB6A4A","#CB181D"),6)) +
   scale_alpha_manual(values = c(0,1))
 
+# Save plot
+ggsave(p, file = "Models/ModelInterpretation/Coloc/Coloc_results_v2.jpg", width = 8, height = 5)
 
-ggsave(p, file = "Coloc_results_v2.jpg", width = 8, height = 5)
-
-
+# Get annotation of significant CpGs
 results_all_ann[results_all_ann$FDR < 0.05,]
 Probe2Gene_final[Probe2Gene_final$CpG == "cg19514613",]
 
-check_dataset(coloc_data_GWAS,warn.minp=1e-10)
-
-
-
-
-
-
-
-selSNPs <- unique(str_remove(str_remove(str_remove(test$name, "chr"), ":SNP"), ":INDEL"))

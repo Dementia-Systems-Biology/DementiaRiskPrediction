@@ -1,18 +1,27 @@
+# ============================================================================ #
+# File: MRS_PGS_Cor.R
+# Author: Jarno Koetsier
+# Date: August 6, 2023
+# Description: Calculate correlations between MRSs and PGSs.
+# ============================================================================ #
+
 # Clear workspace and console
 rm(list = ls())
 cat("\014") 
 
-load("~/PGS_EMIF_AD.RData")
-load("~/predictedScore_factors_EMIF.RData")
-load("~/metaData_fil.RData")
+# Load data
+load("EMIF-AD/Data/PGS_EMIF_AD.RData")                  # PGSs
+load("EMIF-AD/Data/predictedScore_factors_EMIF.RData")  # MRSs
+load("EMIF-AD/Data/metaData_fil.RData")                 # Meta data
 
+# Get samples with PGSs and MRSs available
 samples <- intersect(PGS_all$ID, metaData_fil$Sample_Name)
 rownames(metaData_fil) <- metaData_fil$Sample_Name
-
 rownames(PGS_all) <- PGS_all$ID
 PGS_fil <- PGS_all[samples,]
 MRS_fil <- predictedScore_factors[metaData_fil[samples, "X"],]
 
+# Calculate correlations between matching pairs of PGSs and MRSs
 plotDF <- as.data.frame(matrix(NA,nrow = 11, ncol = 4))
 colnames(plotDF) <- c("MRS", "PGS", "Cor", "pvalue")
 
@@ -31,22 +40,23 @@ for (i in 1:length(MRS_names)){
   plotDF[i,] <- c(MRS_names[i], PGS_names[i], coeff,pvalue)
 }
 
+# Prepare data for plotting
 plotDF$pvalue <- as.numeric(plotDF$pvalue)
-
-names(selCpGs)
-plotDF <- plotDF[plotDF$MRS %in% names(selCpGs),]
-
 plotDF$Name <- c("Syst. blood pressure",
+                 "Total cholesterol",
                  "Low education",
                  "Physical inactivity",
                  "Dietary intake",
                  "Depression",
                  "Type II diabetes",
+                 "Heart disease",
                  "Alcohol consumption",
+                 "BMI",
                  "HDL cholesterol")
 
 plotDF$Sig <- ifelse(plotDF$pvalue < 0.05, "Yes", "No")
 
+# Make plot
 p <- ggplot(plotDF) +
   geom_bar(aes(x = Name, y = abs(as.numeric(Cor)), fill = Sig), stat = "identity",
            position = position_dodge(), color = "black") +
@@ -58,4 +68,5 @@ p <- ggplot(plotDF) +
   theme_bw() +
   theme(legend.position = "bottom")
 
-ggsave(p, file = "PGS_MRS_Cor.png", width = 7.5, height = 5)
+# Save plot
+ggsave(p, file = "MRS_PGS_Cor.png", width = 7.5, height = 5)

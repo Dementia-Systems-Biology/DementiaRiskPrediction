@@ -1,3 +1,9 @@
+# ============================================================================ #
+# File: ShapValues.R
+# Author: Jarno Koetsier
+# Date: August 6, 2023
+# Description: Calculate SHAP values of Epi-MCI model's features.
+# ============================================================================ #
 
 #######################################################################################
 
@@ -20,10 +26,10 @@ rm(list = ls())
 cat("\014") 
 
 # Load data
-load("EMIF/X_train_EMIF.RData")
-load("EMIF/Y_train_EMIF.RData")
-load("EMIF/X_test_EMIF.RData")
-load("EMIF/Y_test_EMIF.RData")
+load("EMIF-AD/Data/X_train_EMIF.RData")
+load("EMIF-AD/Data/Y_train_EMIF.RData")
+load("EMIF-AD/Data/X_test_EMIF.RData")
+load("EMIF-AD/Data/Y_test_EMIF.RData")
 
 
 ###############################################################################
@@ -33,7 +39,7 @@ load("EMIF/Y_test_EMIF.RData")
 ###############################################################################
 
 # Load MCI model
-load("EMIF/Fit_EMIF_MCI_sPLS.RData")
+load("Models/EMIF_Models/MRS/Fit_EMIF_MCI_sPLS.RData")
 
 # Make explained object
 explainer <- DALEX::explain(fit, data = X_train, y = NULL)
@@ -64,7 +70,7 @@ output <- output[,-1]
 colnames(output) <- rownames(X_test)
 
 # Save SHAP values 
-save(output, file = "EMIF/output_shap_sPLS.RData")
+save(output, file = "Models/ModelInterpretation/SHAP/output_shap_sPLS.RData")
 
 
 ###############################################################################
@@ -84,7 +90,7 @@ plotDF <- NULL
 for (i in 1:length(models)){
   
   # Load SHAP values
-  load(paste0("EMIF/output_shap_", models[i], ".RData"))
+  load(paste0("Models/ModelInterpretation/SHAP/output_shap_", models[i], ".RData"))
   
   # Scale SHAP values per individual
   #output_scaled <- t(t(output)/colSums(abs(output)))
@@ -128,7 +134,7 @@ colors_border=rev(c("#EF3B2C","#CB181D", "#99000D") )
 colors_in=c( rgb(0.2,0.5,0.5,0.4), rgb(0.8,0.2,0.5,0.4) , rgb(0.7,0.5,0.1,0.4) )
 
 # plot with default options:
-jpeg("EMIF/shaply_emif_new.jpg", width = 8000, height = 7000, quality = 100)
+jpeg("Models/ModelInterpretation/SHAP/shaply_emif_new.jpg", width = 8000, height = 7000, quality = 100)
 radarchart( data  , axistype=0 , 
             #custom polygon
             pcol=colors_border, plwd=100 , plty=1,
@@ -139,75 +145,11 @@ radarchart( data  , axistype=0 ,
 )
 dev.off()
 
-#==============================================================================#
-# MCI models from EMIF
-#==============================================================================#
-
-# Models
-models <- c("CAIDE1", "LIBRA","EN", "sPLS", "RF")
-
-plotDF <- NULL
-for (i in 1:length(models)){
-  
-  # Load SHAP values
-  load(paste0("EMIF/Old/output_shap_", models[i], ".RData"))
-  
-  # Scale SHAP values per individual
-  output_scaled <- t(t(output)/colSums(abs(output)))
-  
-  # Get average SHAP values
-  temp <- data.frame(Variable = rownames(output_scaled),
-                     value = rowMeans(abs(output_scaled)))
-  
-  if (i > 1){
-    plotDF <- inner_join(plotDF, temp, by = c("Variable" = "Variable"))
-  } else{
-    plotDF <- temp
-  }
-}
-
-# Set row names
-rownames(plotDF) <- c("Age", "Alcohol Intake", "BMI", "Depression", "Type II Diabetes",
-                      "Dietary Intake", "Education", "HDL Chol.", "Heart Disease",
-                      "Physical Inact.", "Sex", "Smoking", "Syst. Blood Pressure", "Total Chol.")
-plotDF <- plotDF[,-1]
-
-# Set column names
-colnames(plotDF) <- c("CAIDE1", "LIBRA","ElasticNet", "sPLS", "Random Forest")
-
-# Prepate data for plotting
-data <- as.data.frame(t(plotDF))
-data <- rbind(rep(0.5,5) , rep(0,5) , data)
-
-# Color vector
-colors_border=c(rev(c("#2171B5","#084594")),rev(c("#EF3B2C","#CB181D", "#99000D")))
-
-# plot with default options:
-radarchart( data  , axistype=0 , 
-            #custom polygon
-            pcol=colors_border  , plwd=4 , plty=1,
-            #custom the grid
-            cglcol="grey", cglty=1, axislabcol="grey", cglwd=0.8,
-            #custom labels
-            vlcex=0.8 
-)
-
-# plot with default options:
-jpeg("EMIF/shaply_extend.png", width = 8000, height = 7000, quality = 100)
-radarchart( data  , axistype=0 , 
-            #custom polygon
-            pcol=colors_border, plwd=100 , plty=1,
-            #custom the grid
-            cglcol="grey", cglty=1, axislabcol="grey", cglwd=8,
-            #custom labels
-            vlcex=20 
-)
-dev.off()
 
 
 #######################################################################################
 
-# SHAP values: MRSs + CSF biomarkers
+# SHAP values: MRSs + CSF biomarkers (NOT TESTED YET)
 
 #######################################################################################
 
@@ -226,13 +168,13 @@ rm(list = ls())
 cat("\014") 
 
 # Load data
-load("EMIF/X_train_EMIF.RData")
-load("EMIF/Y_train_EMIF.RData")
-load("EMIF/X_test_EMIF.RData")
-load("EMIF/Y_test_EMIF.RData")
+load("EMIF-AD/Data/X_train_EMIF.RData")
+load("EMIF-AD/Data/Y_train_EMIF.RData")
+load("EMIF-AD/Data/X_test_EMIF.RData")
+load("EMIF-AD/Data/Y_test_EMIF.RData")
+load("EMIF-AD/Data/metaData_fil.RData")
 
 # Prepare data
-load("EMIF/metaData_fil.RData")
 rownames(metaData_fil) <- metaData_fil$X
 CSFbio <- metaData_fil[,c("Ptau_ASSAY_Zscore", "Ttau_ASSAY_Zscore", "AB_Zscore", "Age")]
 colnames(CSFbio) <- c("Ptau_ASSAY_Zscore", "Ttau_ASSAY_Zscore", "AB_Zscore", "ChrAge")
@@ -243,7 +185,6 @@ samples <- rownames(CSFbio)[(!is.na(CSFbio$Ptau_ASSAY_Zscore)) &
 # Add CSF info
 Y_train <- Y_train[intersect(samples, rownames(Y_train)),]
 Y_test <- Y_test[intersect(samples, rownames(Y_test)),]
-
 X_train <- cbind.data.frame(X_train[rownames(Y_train),], CSFbio[rownames(Y_train),])
 X_test <- cbind.data.frame(X_test[rownames(Y_test),], CSFbio[rownames(Y_test),])
 
@@ -255,7 +196,7 @@ X_test <- cbind.data.frame(X_test[rownames(Y_test),], CSFbio[rownames(Y_test),])
 ###############################################################################
 
 # Load MCI model
-load("EMIF/Fit_EMIF_CI_sPLS_CSFbio.RData")
+load("Model/EMIF_Models/CSF/Fit_EMIF_MCI_sPLS_CSFbio.RData")
 
 # Make explained object
 explainer <- DALEX::explain(fit, data = X_train, y = NULL)
@@ -286,7 +227,7 @@ output <- output[,-1]
 colnames(output) <- rownames(X_test)
 
 # Save SHAP values 
-save(output, file = "EMIF/output_shap_sPLS_CSFbio.RData")
+save(output, file = "Models/ModelInterpretation/SHAP/output_shap_sPLS_CSFbio.RData")
 
 
 ###############################################################################
@@ -306,7 +247,7 @@ plotDF <- NULL
 for (i in 1:length(models)){
   
   # Load SHAP values
-  load(paste0("EMIF/output_shap_", models[i], "_CSFbio.RData"))
+  load(paste0("Models/ModelInterpretation/SHAP/output_shap_", models[i], "_CSFbio.RData"))
   
   # Scale SHAP values per individual
   output_scaled <- t(t(output)/colSums(abs(output)))
@@ -324,31 +265,42 @@ for (i in 1:length(models)){
 plotDF <- plotDF[plotDF$Variable != "ChrAge",]
 
 # Set row names
-rownames(plotDF) <- c("Age", "Alcohol Intake", "BMI", "Depression", "Type II Diabetes",
+rownames(plotDF) <- c("Amyloid-beta", "Age", "Alcohol Intake", "BMI", "Depression", "Type II Diabetes",
                       "Dietary Intake", "Education", "HDL Chol.", "Heart Disease",
-                      "Physical Act.", "Sex", "Smoking", "Syst. Blood Pressure", "Total Chol.")
+                      "Physical Act.", "P-tau", "Sex", "Smoking", "Syst. Blood Pressure", "Total Chol.",
+                       "T-tau")
 plotDF <- plotDF[,-1]
 
 # Set column names
 colnames(plotDF) <- c("ElasticNet", "sPLS", "Random Forest")
 
+# Scale SHAP values
+for (i in 1:ncol(plotDF)){
+  plotDF[,i] <- plotDF[,i]/sum(plotDF[,i])
+}
+
+
 # Prepare data for plotting
 data <- as.data.frame(t(plotDF))
-data <- rbind(rep(0.5,5) , rep(0,5) , data)
+data <- rbind(rep(0.3,5) , rep(0,5) , data)
+data <- data[,c("Amyloid-beta", "Age", "Alcohol Intake", "BMI", "Depression", "Type II Diabetes",
+                "Dietary Intake", "Education", "HDL Chol.", "Heart Disease",
+                "Physical Act.", "P-tau", "Sex", "Smoking", "Syst. Blood Pressure", "Total Chol.",
+                "T-tau")]
 
 # Color vector
 colors_border=rev(c("#EF3B2C","#CB181D", "#99000D") )
 colors_in=c( rgb(0.2,0.5,0.5,0.4), rgb(0.8,0.2,0.5,0.4) , rgb(0.7,0.5,0.1,0.4) )
 
 # plot with default options:
+jpeg("Models/ModelInterpretation/SHAP/shaply_emif_CSF.jpg", width = 8000, height = 7000, quality = 100)
 radarchart( data  , axistype=0 , 
             #custom polygon
-            pcol=colors_border  , plwd=4 , plty=1,
+            pcol=colors_border, plwd=100 , plty=1,
             #custom the grid
-            cglcol="grey", cglty=1, axislabcol="grey", caxislabels=seq(0,0.4,0.1), cglwd=0.8,
+            cglcol="grey", cglty=1, axislabcol="grey", caxislabels=seq(0,0.1,0.05), cglwd=8,
             #custom labels
-            vlcex=0.8 
+            vlcex=20 
 )
-
-
+dev.off()
 

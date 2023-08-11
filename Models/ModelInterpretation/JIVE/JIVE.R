@@ -1,34 +1,45 @@
+# ============================================================================ #
+# File: JIVE.R
+# Author: Jarno Koetsier
+# Date: August 6, 2023
+# Description: Perform JIVE on the model's features and their mQTLs.
+# ============================================================================ #
+
+# Load packages
 library(vcfR)
 library(caret)
 library(glmnet)
 library(tidyverse)
 library(r.jive)
+library(httr)
+library(dplyr)
 
-vcfFile <- read.vcfR("GenoMeth/vcf_EXTEND.vcf")
+# Read VCF file
+vcfFile <- read.vcfR("EXTEND/Data/vcf_EXTEND.vcf")
 
+# Prepare genotype matrix
 genoType <- vcfFile@gt
-
 genoType <- genoType[,-1]
 genoType[genoType == "1/1"] <- 2
 genoType[genoType == "0/0"] <- 0
 genoType[genoType == "1/0"] <- 1
 genoType[genoType == "0/1"] <- 1
-
 genoType <- matrix(as.numeric(genoType), ncol = 1036)
+
+# Set row and column names
 test <- vcfFile@gt
 colnames(genoType) <- colnames(test)[-1]
 test <- vcfFile@fix
 rownames(genoType) <- test[,3]
-save(genoType,file = "GenoMeth/genoType.RData")
 
-load("~/Data/methSet_allNorm_fil.RData")
-load("GenoMeth/genoType.RData")
-load("~/allModels.RData")
-varImportance <- varImp(allModels[["Depression"]])$importance
-selCpGs <- rownames(varImportance)[varImportance[,1] != 0]
+# Save genotype data
+save(genoType,file = "EXTEND/Data/genoType.RData")
 
-library(httr)
-library(dplyr)
+# Load DNA methylation data
+load("EXTEND/Data/methSet_allNorm_fil.RData")
+load("Models/ModelInterpretation/selCpGs.RData")
+
+# Get mQTLs of model's features
 query <- list(
   cpgs = selCpGs,
   pval = 1e-5,
