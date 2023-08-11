@@ -31,7 +31,11 @@ As DNA methylation may act as the molecular link between lifestyle/environment a
 The main research objective is to establish a robust model for predicting a person's midlife dementia risk.
 
 ## Workflow
-
+The applied methodology consists of four main steps:
+1. **Model generation** using the DNA methylation data of the [EXTEND](https://github.com/jarnokoetsier/DementiaRiskPrediction/tree/main/EXTEND) and [EMIF-AD](https://github.com/jarnokoetsier/DementiaRiskPrediction/tree/main/EMIF-AD) cohorts. 
+2. **Model validation** in the [EMIF-AD](https://github.com/jarnokoetsier/DementiaRiskPrediction/tree/main/EMIF-AD), [PPMI](https://github.com/jarnokoetsier/DementiaRiskPrediction/tree/main/PPMI), and [ADNI](https://github.com/jarnokoetsier/DementiaRiskPrediction/tree/main/ADNI) cohorts.
+3. **Model interpretation** ([here](https://github.com/jarnokoetsier/DementiaRiskPrediction/tree/main/Models/ModelInterpretation)).
+4. **Model extension** with genetic and cerebral spinal fluid biomarkers in the [EMIF-AD](https://github.com/jarnokoetsier/DementiaRiskPrediction/tree/main/EMIF-AD) cohort. 
 
 ## Contributors
 Jarno Koetsier<sup>1*</sup>, Rachel Cavill<sup>2</sup>, and Ehsan Pishva<sup>3</sup>
