@@ -8,13 +8,13 @@ prediction of midlife dementia risk
 </h1>
 
 <p align="center">
-<a href="https://github.com/jarnokoetsier/MidlifeDementiaRisk/blob/main/README.md#Background">Background</a>
+<a href="https://github.com/jarnokoetsier/DementiaRiskPrediction/blob/main/README.md#Background">Background</a>
      ·
-<a href="https://github.com/jarnokoetsier/MidlifeDementiaRisk/blob/main/README.md#Research-Aim">Research Aim</a>
+<a href="https://github.com/jarnokoetsier/DementiaRiskPrediction/blob/main/README.md#Research-Aim">Research Aim</a>
      ·
-<a href="https://github.com/jarnokoetsier/MidlifeDementiaRisk/blob/main/README.md#Methods">Methods</a>
+<a href="https://github.com/jarnokoetsier/DementiaRiskPrediction/blob/main/README.md#Methods">Methods</a>
      ·
-<a href="https://github.com/jarnokoetsier/MidlifeDementiaRisk/blob/main/README.md#Contact">Contact</a>
+<a href="https://github.com/jarnokoetsier/DementiaRiskPrediction/blob/main/README.md#Contact">Contact</a>
 </p>
 
 <p align="center">
