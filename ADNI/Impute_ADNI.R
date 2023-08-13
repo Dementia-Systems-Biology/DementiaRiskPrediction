@@ -78,25 +78,3 @@ X_ADNI_imp <- imputePCA(t(X_ADNI_mis),ncp = optPC)$completeObs
 
 # Save the imputed data
 save(X_ADNI_imp, file = "ADNI/Data/X_ADNI_imp.RData")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
