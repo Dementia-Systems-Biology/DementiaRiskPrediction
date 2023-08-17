@@ -18,6 +18,7 @@ library(tidyverse)
 library(caret)
 library(patchwork)
 library(ranger)
+library(pROC)
 
 # Clear workspace and console
 rm(list = ls())

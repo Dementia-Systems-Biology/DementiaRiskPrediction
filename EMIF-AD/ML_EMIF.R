@@ -366,10 +366,19 @@ EN <- predict(fit, X_test, type = "prob")
 load("Models/EMIF_Models/MRS/Fit_EMIF_MCI_sPLS.RData")
 sPLS <- predict(fit, X_test, type = "prob")
 
+load("EMIF/Data/X_EMIF_imp.RData")
+load("Models/LIBRA_CAIDE/CAIDE1_Model_Cor_RF.RData")
+CAIDE <- predict(CAIDE1_Model, X_EMIF_imp[rownames(X_test),])
+load("Models/LIBRA_CAIDE/LIBRA_Model_Cor_RF.RData")
+LIBRA <- predict(LIBRA_Model,X_EMIF_imp[rownames(X_test),])
+
+
 # Combine values in data frame
 plotDF <- data.frame(EN = log(EN$MCI/(1-EN$MCI)),
                      sPLS = log(sPLS$MCI/(1-sPLS$MCI)),
                      RF = log(RF$MCI/(1-RF$MCI)),
+                     EpiCAIDE = CAIDE,
+                     EpiLIBRA = LIBRA,
                      EpiAge = X_test$EpiAge,
                      Age = Y_test$Age,
                      Sex = Y_test$Gender,
@@ -396,9 +405,11 @@ model <- lm(Ynum ~ EpiAge + Age + Sex, data = plotDF)
 summary(model)
 
 # Calculate sensitivites, specificities and AUC values
-score <- c("EpiAge","EN", "sPLS", "RF")
-scoreName <- c("Epi-Age","ElasticNet", "sPLS-DA", 
-               "Random Forest")
+score <- c("EpiAge","EpiCAIDE", "EpiLIBRA","EN", "sPLS", "RF")
+scoreName <- c("Epi-Age:","Epi-CAIDE:","Epi-LIBRA:",
+               "Epi-AD (EN):", "Epi-AD (sPLS-DA):", 
+               "Epi-AD (RF-RFE):")
+
 ROCplot <- NULL                       # Data frame with sensitivities and specificities
 aucValue <- rep(NA, length(score))    # AUC
 liValue <- rep(NA, length(score))     # lower interval value of AUC
@@ -417,19 +428,21 @@ for (i in 1:length(score)){
   uiValue[i] <- format(round(as.numeric(ci(test)[3]),2),nsmall = 2)
 }
 
-# Combine AUC values into data frame
-scoreName1 <- c("Epi-Age:\t\t\t", "Epi-MCI (EN):\t", "Epi-MCI (sPLS-DA):", 
-                "Epi-MCI (RF-RFE):")
 
-plotAUC <- data.frame(AUC = paste0(scoreName1,"\t",aucValue, " (", liValue, "-", uiValue, ")"),
+plotModel <- data.frame(AUC = scoreName,
+                        Score = scoreName,
+                        X = 0.50,
+                        Y = rev(seq(0.05,0.25,length.out = length(aucValue))))
+
+plotAUC <- data.frame(AUC = paste0(aucValue, " (", liValue, "-", uiValue, ")"),
                       Score = scoreName,
-                      X = 0.75,
+                      X = 0.8,
                       Y = rev(seq(0.05,0.25,length.out = length(aucValue))))
 
 ROCplot$Class <- factor(ROCplot$Class, levels = scoreName)
 
 # Colors for plotting
-colors <- rev(c("#EF3B2C","#CB181D", "#99000D", "#084594"))
+colors <- rev(c("#EF3B2C","#CB181D", "#99000D", "#4292C6","#2171B5","#084594"))
 
 # Make plot
 p <- ggplot(ROCplot) +
@@ -437,9 +450,12 @@ p <- ggplot(ROCplot) +
   geom_path(aes(y = Sensitivity, x = 1- Specificity,
                 color = Class), 
             size = 1.5, linetype = "solid") +
+  geom_text(data = plotModel, aes(x = X, y = Y, label = AUC, color = Score),
+            fontface = "bold", size = 4, hjust = 0) +
   geom_text(data = plotAUC, aes(x = X, y = Y, label = AUC, color = Score),
-            fontface = "bold", size = 4) +
+            fontface = "bold", size = 4, hjust = 0) +
   scale_color_manual(values = colors) +
+  #ggtitle("MCI vs Control") +
   theme_classic() +
   theme(legend.title = element_blank(),
         legend.position = "none",
@@ -688,10 +704,18 @@ EN <- predict(fit, X_test, type = "prob")
 load("Models/EMIF_Models/MRS/Fit_EMIF_AD_sPLS.RData")
 sPLS <- predict(fit, X_test, type = "prob")
 
+load("EMIF/Data/X_EMIF_imp.RData")
+load("Models/CAIDE_LIBRA/CAIDE1_Model_Cor_RF.RData")
+CAIDE <- predict(CAIDE1_Model, X_EMIF_imp[rownames(X_test),])
+load("Models/CAIDE_LIBRA/LIBRA_Model_Cor_RF.RData")
+LIBRA <- predict(LIBRA_Model,X_EMIF_imp[rownames(X_test),])
+
 # Combine values in data frame
 plotDF <- data.frame(EN = log(EN$AD/(1-EN$AD)),
                      sPLS = log(sPLS$AD/(1-sPLS$AD)),
                      RF = log(RF$AD/(1-RF$AD)),
+                     EpiCAIDE = CAIDE,
+                     EpiLIBRA = LIBRA,
                      EpiAge = X_test$EpiAge,
                      Age = Y_test$Age,
                      Sex = Y_test$Gender,
@@ -717,12 +741,12 @@ summary(model)
 model <- lm(Ynum ~ EpiAge + Age + Sex, data = plotDF)
 summary(model)
 
+
 # Calculate sensitivites, specificities and AUC values
-score <- c("EpiAge","EN", "sPLS", "RF")
-scoreName <- c("Epi-Age","ElasticNet", "sPLS-DA", 
-               "Random Forest")
-scoreName1 <- c("Epi-Age:\t\t\t", "Epi-AD (EN):\t\t", "Epi-AD (sPLS-DA):", 
-                "Epi-AD (RF-RFE):\t")
+score <- c("EpiAge","EpiCAIDE", "EpiLIBRA","EN", "sPLS", "RF")
+scoreName1 <- c("Epi-Age:","Epi-CAIDE:","Epi-LIBRA:",
+                "Epi-AD (EN):", "Epi-AD (sPLS-DA):", 
+                "Epi-AD (RF-RFE):")
 
 ROCplot <- NULL                       # Data frame with sensitivities and specificities
 aucValue <- rep(NA, length(score))    # AUC
@@ -743,15 +767,20 @@ for (i in 1:length(score)){
 }
 
 
-plotAUC <- data.frame(AUC = paste0(scoreName1,"\t",aucValue, " (", liValue, "-", uiValue, ")"),
+plotModel <- data.frame(AUC = scoreName1,
+                        Score = scoreName1,
+                        X = 0.50,
+                        Y = rev(seq(0.05,0.25,length.out = length(aucValue))))
+
+plotAUC <- data.frame(AUC = paste0(aucValue, " (", liValue, "-", uiValue, ")"),
                       Score = scoreName1,
-                      X = 0.75,
+                      X = 0.8,
                       Y = rev(seq(0.05,0.25,length.out = length(aucValue))))
 
 ROCplot$Class <- factor(ROCplot$Class, levels = scoreName1)
 
 # Colors for plotting
-colors <- rev(c("#EF3B2C","#CB181D", "#99000D", "#084594"))
+colors <- rev(c("#EF3B2C","#CB181D", "#99000D", "#4292C6","#2171B5","#084594"))
 
 # Make plot
 p <- ggplot(ROCplot) +
@@ -759,9 +788,12 @@ p <- ggplot(ROCplot) +
   geom_path(aes(y = Sensitivity, x = 1- Specificity,
                 color = Class), 
             size = 1.5, linetype = "solid") +
+  geom_text(data = plotModel, aes(x = X, y = Y, label = AUC, color = Score),
+            fontface = "bold", size = 4, hjust = 0) +
   geom_text(data = plotAUC, aes(x = X, y = Y, label = AUC, color = Score),
-            fontface = "bold", size = 4) +
+            fontface = "bold", size = 4, hjust = 0) +
   scale_color_manual(values = colors) +
+  #ggtitle("MCI vs Control") +
   theme_classic() +
   theme(legend.title = element_blank(),
         legend.position = "none",
@@ -774,5 +806,6 @@ p <- ggplot(ROCplot) +
                                      size = 10,
                                      face = "italic"))
 
+# Save plot
 ggsave(p, file = "EMIF-AD/ModelPerformance/ROC_AD_EMIF1.jpg", width = 7, height = 5)
 

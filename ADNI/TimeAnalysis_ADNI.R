@@ -6,8 +6,18 @@
 # ============================================================================ #
 
 # Load packages
+library(survival)
+library(lubridate)
+library(ggsurvfit)
+library(gtsummary)
+library(tidycmprsk)
+library(tidyverse)
 library(tidyverse)
 library(caret)
+library(tidyverse)
+library(caret)
+library(patchwork)
+library(ranger)
 library(pROC)
 
 # Clear workspace and console
