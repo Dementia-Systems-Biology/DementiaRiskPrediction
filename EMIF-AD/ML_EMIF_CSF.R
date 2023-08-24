@@ -23,6 +23,7 @@ library(pROC)
 library(e1071)
 library(ranger)
 library(dplyr)
+library(pROC)
 
 # Clear workspace and console
 rm(list = ls())
@@ -35,7 +36,7 @@ load("EMIF-AD/Data/X_test_EMIF.RData")
 load("EMIF-AD/Data/Y_test_EMIF.RData")
 
 # Add CSF biomarkers
-load("EMIF/metaData_fil.RData")
+load("EMIF-AD/Data/metaData_fil.RData")
 rownames(metaData_fil) <- metaData_fil$X
 CSFbio <- metaData_fil[,c("Ptau_ASSAY_Zscore", "Ttau_ASSAY_Zscore", "AB_Zscore", "Age")]
 colnames(CSFbio) <- c("Ptau_ASSAY_Zscore", "Ttau_ASSAY_Zscore", "AB_Zscore", "ChrAge")
@@ -596,33 +597,33 @@ auc(roc_test_woa)
 # Load models and prediction:
 
 # Random forest models
-load("EMIF/Fit_EMIF_MCI_RF_CSFbio.RData")
+load("Models/EMIF_Models/CSF/Fit_EMIF_MCI_RF_CSFbio.RData")
 RF <- predict(fit, X_test, type = "prob")
-load("EMIF/Fit_EMIF_MCI_RF_CSFbioonly.RData")
+load("Models/EMIF_Models/CSF/Fit_EMIF_MCI_RF_CSFbioonly.RData")
 RF_wo <- predict(fit_wo, X_test, type = "prob")
-load("EMIF/Fit_EMIF_MCI_RF_CSFbio_noage.RData")
+load("Models/EMIF_Models/CSF/Fit_EMIF_MCI_RF_CSFbio_noage.RData")
 RF_woa <- predict(fit_woa, X_test, type = "prob")
-load("EMIF/Fit_EMIF_MCI_RF_CSFbioage.RData")
+load("Models/EMIF_Models/CSF/Fit_EMIF_MCI_RF_CSFbioage.RData")
 RF_wa <- predict(fit_wo, X_test, type = "prob")
 
 # ElasticNet models
-load("EMIF/Fit_EMIF_MCI_EN_CSFbio.RData")
+load("Models/EMIF_Models/CSF/Fit_EMIF_MCI_EN_CSFbio.RData")
 EN <- predict(fit, X_test, type = "prob")
-load("EMIF/Fit_EMIF_MCI_EN_CSFbioonly.RData")
+load("Models/EMIF_Models/CSF/Fit_EMIF_MCI_EN_CSFbioonly.RData")
 EN_wo <- predict(fit_wo, X_test, type = "prob")
-load("EMIF/Fit_EMIF_MCI_EN_CSFbio_noage.RData")
+load("Models/EMIF_Models/CSF/Fit_EMIF_MCI_EN_CSFbio_noage.RData")
 EN_woa <- predict(fit_woa, X_test, type = "prob")
-load("EMIF/Fit_EMIF_MCI_EN_CSFbioage.RData")
+load("Models/EMIF_Models/CSF/Fit_EMIF_MCI_EN_CSFbioage.RData")
 EN_wa <- predict(fit_wo, X_test, type = "prob")
 
 # sPLS-DA models
-load("EMIF/Fit_EMIF_MCI_sPLS_CSFbio.RData")
+load("Models/EMIF_Models/CSF/Fit_EMIF_MCI_sPLS_CSFbio.RData")
 sPLS <- predict(fit, X_test, type = "prob")
-load("EMIF/Fit_EMIF_MCI_sPLS_CSFbioonly.RData")
+load("Models/EMIF_Models/CSF/Fit_EMIF_MCI_sPLS_CSFbioonly.RData")
 sPLS_wo <- predict(fit_wo, X_test, type = "prob")
-load("EMIF/Fit_EMIF_MCI_sPLS_CSFbio_noage.RData")
+load("Models/EMIF_Models/CSF/Fit_EMIF_MCI_sPLS_CSFbio_noage.RData")
 sPLS_woa <- predict(fit_woa, X_test, type = "prob")
-load("EMIF/Fit_EMIF_MCI_sPLS_CSFbioage.RData")
+load("Models/EMIF_Models/CSF/Fit_EMIF_MCI_sPLS_CSFbioage.RData")
 sPLS_wa <- predict(fit_wo, X_test, type = "prob")
 
 # Combine predictions into dataframe
@@ -649,10 +650,8 @@ testDF <- data.frame(EN = EN$MCI,
 
 # Prepare data for plotting
 score <- c("EN_wo", "sPLS_wo", "RF_wo", "EN", "sPLS", "RF")
-scoreName <- c("CSF (EN)", "CSF (sPLS-DA)", "CSF (RF)",
-               "CSF + MRS (EN)", "CSF + MRS (sPLS-DA)", "CSF + MRS (RF)")
-scoreName1 <- c("CSF (EN)\t\t", "CSF (sPLS-DA)\t","CSF (RF-RFE)\t",
-                "MRSs/CSF (EN):\t", "MRSs/CSF (sPLS-DA):", 
+scoreName <- c("CSF (EN):", "CSF (sPLS-DA):","CSF (RF-RFE):",
+                "MRSs/CSF (EN):", "MRSs/CSF (sPLS-DA):", 
                 "MRSs/CSF (RF-RFE):")
 plotDF <- as.data.frame(testDF)
 ROCplot <- NULL
@@ -666,7 +665,7 @@ for (i in 1:length(score)){
   
   temp <- data.frame(Sensitivity = test$sensitivities,
                      Specificity = test$specificities,
-                     Class = rep(scoreName1[i],length(test$specificities)))
+                     Class = rep(scoreName[i],length(test$specificities)))
   
   ROCplot <- rbind.data.frame(ROCplot, temp)
   aucValue[i] <- format(round(as.numeric(auc(test)),2),nsmall = 2)
@@ -675,16 +674,20 @@ for (i in 1:length(score)){
 }
 
 
-plotAUC <- data.frame(AUC = paste0(scoreName1,"\t",aucValue, " (", liValue, "-", uiValue, ")"),
-                      Score = scoreName1,
-                      X = 0.75,
-                      Y = rev(seq(0.05,0.3,length.out = length(aucValue))))
+plotModel <- data.frame(AUC = scoreName,
+                        Score = scoreName,
+                        X = 0.50,
+                        Y = rev(seq(0.05,0.25,length.out = length(aucValue))))
 
-ROCplot$Class <- factor(ROCplot$Class, levels = scoreName1)
+plotAUC <- data.frame(AUC = paste0(aucValue, " (", liValue, "-", uiValue, ")"),
+                      Score = scoreName,
+                      X = 0.8,
+                      Y = rev(seq(0.05,0.25,length.out = length(aucValue))))
+
+ROCplot$Class <- factor(ROCplot$Class, levels = scoreName)
 
 # Colors for plotting
-colors <- c(rev(c("#6BAED6","#2171B5","#084594")),
-            rev(c("#EF3B2C","#CB181D", "#99000D")))
+colors <- rev(c("#EF3B2C","#CB181D", "#99000D", "#4292C6","#2171B5","#084594"))
 
 # Make plot
 p <- ggplot(ROCplot) +
@@ -692,13 +695,19 @@ p <- ggplot(ROCplot) +
   geom_path(aes(y = Sensitivity, x = 1- Specificity,
                 color = Class), 
             size = 1.5, linetype = "solid") +
+  geom_text(data = plotModel, aes(x = X, y = Y, label = AUC, color = Score),
+            fontface = "bold", size = 4, hjust = 0) +
   geom_text(data = plotAUC, aes(x = X, y = Y, label = AUC, color = Score),
-            fontface = "bold") +
-  #ggtitle("MCI vs Control") +
+            fontface = "bold", size = 4, hjust = 0) +
+  geom_text(x = 0.8, y = 0.3, label = "AUROC", color = "black",
+            fontface = "bold", size = 5, hjust = 0) +
   scale_color_manual(values = colors) +
+  #ggtitle("MCI vs Control") +
   theme_classic() +
   theme(legend.title = element_blank(),
         legend.position = "none",
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10),
         plot.title = element_text(hjust = 0.5,
                                   face = "bold",
                                   size = 16),
@@ -707,5 +716,5 @@ p <- ggplot(ROCplot) +
                                      face = "italic"))
 
 # Save plot
-ggsave(p, file = "EMIF-AD/ModelPerformance/ROC_MCI_EMIF_combinedPlot.png", width = 7, height = 5)
+ggsave(p, file = "EMIF-AD/ModelPerformance/ROC_MCI_EMIF_CSF.jpg", width = 7, height = 5)
 

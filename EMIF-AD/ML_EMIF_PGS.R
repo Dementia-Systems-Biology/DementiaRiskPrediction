@@ -37,8 +37,8 @@ load("EMIF-AD/Data/Y_test_EMIF.RData")
 # Add PGSs:
 
 # Load data
-load("EMIF/metaData_fil.RData")
-load("~/EMIF/PGS_EMIF_AD.RData")
+load("EMIF-AD/Data/metaData_fil.RData")
+load("EMIF-AD/Data/PGS_EMIF_AD.RData")
 
 # Get PGSs
 output <- inner_join(PGS_all,metaData_fil[,c("X","Sample_Name")],by = c("ID" = "Sample_Name"))
@@ -377,13 +377,13 @@ EN <- predict(fit, X_test, type = "prob")
 load("Models/EMIF_Models/PGS_AD/Fit_EMIF_MCI_sPLS_PGS2.RData")
 sPLS <- predict(fit, X_test, type = "prob")
 
-load("Models/EMIF_Models/PGS_AD/Fit_EMIF_MCI_RF_PGSonly.RData")
+load("Models/EMIF_Models/PGS_AD/Fit_EMIF_MCI_RF_PGSonly2.RData")
 RFonly <- predict(fit, X_test, type = "prob")
 
-load("Models/EMIF_Models/PGS_AD/Fit_EMIF_MCI_EN_PGSonly.RData")
+load("Models/EMIF_Models/PGS_AD/Fit_EMIF_MCI_EN_PGSonly2.RData")
 ENonly <- predict(fit, X_test, type = "prob")
 
-load("Models/EMIF_Models/PGS_AD/Fit_EMIF_MCI_sPLS_PGSonly.RData")
+load("Models/EMIF_Models/PGS_AD/Fit_EMIF_MCI_sPLS_PGSonly2.RData")
 sPLSonly <- predict(fit, X_test, type = "prob")
 
 # Combine predictions into dataframe
@@ -403,12 +403,12 @@ plotDF <- data.frame(EN = EN$MCI,
 
 # Calculate sensitivites, specificities and AUC values
 score <- c("ENonly", "sPLSonly", "RFonly","EN", "sPLS", "RF")
-scoreName1 <- c("PGSs (EN)\t\t\t",
-                "PGSs (sPLS-DA)\t\t",
-                "PGSs (RF-RFE)\t\t",
-                "MRSs/PGSs (EN):\t\t", 
+scoreName <- c("PGSs (EN):",
+                "PGSs (sPLS-DA):",
+                "PGSs (RF-RFE):",
+                "MRSs/PGSs (EN):", 
                 "MRSs/PGSs (sPLS-DA):", 
-                "MRSs/PGSs (RF-RFE):\t")
+                "MRSs/PGSs (RF-RFE):")
 ROCplot <- NULL                       # Data frame with sensitivities and specificities
 aucValue <- rep(NA, length(score))    # AUC
 liValue <- rep(NA, length(score))     # lower interval value of AUC
@@ -419,7 +419,7 @@ for (i in 1:length(score)){
   
   temp <- data.frame(Sensitivity = test$sensitivities,
                      Specificity = test$specificities,
-                     Class = rep(scoreName1[i],length(test$specificities)))
+                     Class = rep(scoreName[i],length(test$specificities)))
   
   ROCplot <- rbind.data.frame(ROCplot, temp)
   aucValue[i] <- format(round(as.numeric(auc(test)),2),nsmall = 2)
@@ -427,19 +427,20 @@ for (i in 1:length(score)){
   uiValue[i] <- format(round(as.numeric(ci(test)[3]),2),nsmall = 2)
 }
 
-# Combine AUC values into data frame
-plotAUC <- data.frame(AUC = paste0(scoreName1,"\t",aucValue, " (", liValue, "-", uiValue, ")"),
-                      Score = scoreName1,
-                      X = 0.7,
-                      Y = rev(seq(0.05,0.3,length.out = length(aucValue))))
+plotModel <- data.frame(AUC = scoreName,
+                        Score = scoreName,
+                        X = 0.45,
+                        Y = rev(seq(0.05,0.25,length.out = length(aucValue))))
 
-ROCplot$Class <- factor(ROCplot$Class, levels = scoreName1)
+plotAUC <- data.frame(AUC = paste0(aucValue, " (", liValue, "-", uiValue, ")"),
+                      Score = scoreName,
+                      X = 0.8,
+                      Y = rev(seq(0.05,0.25,length.out = length(aucValue))))
+
+ROCplot$Class <- factor(ROCplot$Class, levels = scoreName)
 
 # Colors for plotting
-colors <- rev(c("#084594","#EF3B2C","#CB181D", "#99000D"))
-
-colors <- c(rev(c("#6BAED6","#2171B5","#084594")),
-            rev(c("#EF3B2C","#CB181D", "#99000D")))
+colors <- rev(c("#EF3B2C","#CB181D", "#99000D", "#4292C6","#2171B5","#084594"))
 
 # Make plot
 p <- ggplot(ROCplot) +
@@ -447,13 +448,19 @@ p <- ggplot(ROCplot) +
   geom_path(aes(y = Sensitivity, x = 1- Specificity,
                 color = Class), 
             size = 1.5, linetype = "solid") +
+  geom_text(data = plotModel, aes(x = X, y = Y, label = AUC, color = Score),
+            fontface = "bold", size = 4, hjust = 0) +
   geom_text(data = plotAUC, aes(x = X, y = Y, label = AUC, color = Score),
-            fontface = "bold", size = 4) +
+            fontface = "bold", size = 4, hjust = 0) +
+  geom_text(x = 0.8, y = 0.3, label = "AUROC", color = "black",
+            fontface = "bold", size = 5, hjust = 0) +
   scale_color_manual(values = colors) +
   #ggtitle("MCI vs Control") +
   theme_classic() +
   theme(legend.title = element_blank(),
         legend.position = "none",
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10),
         plot.title = element_text(hjust = 0.5,
                                   face = "bold",
                                   size = 16),
@@ -462,4 +469,4 @@ p <- ggplot(ROCplot) +
                                      face = "italic"))
 
 # Save plot
-ggsave(p, file = "EMIF-AD/ModelPerformance/ROC_MCI_EMIF_CSF_PGS.png", width = 7, height = 5)
+ggsave(p, file = "EMIF-AD/ModelPerformance/ROC_MCI_EMIF_PGS.jpg", width = 7, height = 5)

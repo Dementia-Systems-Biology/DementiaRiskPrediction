@@ -144,6 +144,7 @@ library(missMDA)
 library(e1071)
 library(ranger)
 library(dplyr)
+library(pROC)
 
 # Clear workspace and console
 rm(list = ls())
@@ -385,6 +386,8 @@ plotDF <- data.frame(EN = log(EN$MCI/(1-EN$MCI)),
                      Y = Y_test$Y,
                      Ynum = ifelse(Y_test$Y == "MCI",1,0))
 
+save(plotDF, file = "EMIF-AD/Data/plotDF_MCI.RData")
+
 
 # Check whether the predicted score is significantly associated with MCI status:
 
@@ -407,8 +410,8 @@ summary(model)
 # Calculate sensitivites, specificities and AUC values
 score <- c("EpiAge","EpiCAIDE", "EpiLIBRA","EN", "sPLS", "RF")
 scoreName <- c("Epi-Age:","Epi-CAIDE:","Epi-LIBRA:",
-               "Epi-AD (EN):", "Epi-AD (sPLS-DA):", 
-               "Epi-AD (RF-RFE):")
+               "Epi-MCI (EN):", "Epi-MCI (sPLS-DA):", 
+               "Epi-MCI (RF-RFE):")
 
 ROCplot <- NULL                       # Data frame with sensitivities and specificities
 aucValue <- rep(NA, length(score))    # AUC
@@ -454,6 +457,8 @@ p <- ggplot(ROCplot) +
             fontface = "bold", size = 4, hjust = 0) +
   geom_text(data = plotAUC, aes(x = X, y = Y, label = AUC, color = Score),
             fontface = "bold", size = 4, hjust = 0) +
+  geom_text(x = 0.8, y = 0.3, label = "AUROC:", color = "black",
+            fontface = "bold", size = 5, hjust = 0) +
   scale_color_manual(values = colors) +
   #ggtitle("MCI vs Control") +
   theme_classic() +
@@ -722,6 +727,8 @@ plotDF <- data.frame(EN = log(EN$AD/(1-EN$AD)),
                      Y = Y_test$Y,
                      Ynum = ifelse(Y_test$Y == "AD",1,0))
 
+save(plotDF, file = "EMIF-AD/Data/plotDF_AD.RData")
+
 
 # Check whether the predicted score is significantly associated with MCI status:
 
@@ -792,6 +799,8 @@ p <- ggplot(ROCplot) +
             fontface = "bold", size = 4, hjust = 0) +
   geom_text(data = plotAUC, aes(x = X, y = Y, label = AUC, color = Score),
             fontface = "bold", size = 4, hjust = 0) +
+  geom_text(x = 0.8, y = 0.3, label = "AUROC:", color = "black",
+            fontface = "bold", size = 5, hjust = 0) +
   scale_color_manual(values = colors) +
   #ggtitle("MCI vs Control") +
   theme_classic() +

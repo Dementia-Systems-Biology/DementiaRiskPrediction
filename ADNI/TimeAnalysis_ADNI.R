@@ -35,6 +35,10 @@ midlife_samples <- intersect(metaData_fil$Basename[metaData_fil$Age <= 75],
                              rownames(predictedScore_factors))
 metaData_fil <- metaData_fil[midlife_samples,]
 
+# Filter for 
+keep_samples <- unique(MetaData_allTime$RID[(MetaData_allTime$VISCODE == "m48") | (MetaData_allTime$VISCODE == "m42")])
+metaData_fil <- metaData_fil[metaData_fil$RID %in% keep_samples,]
+
 # Filter for MMSE >= 26
 metaData_fil <- metaData_fil[metaData_fil$MMSE.bl >= 26,]
 
@@ -74,7 +78,7 @@ table(predictDF$predClass)
 predictDF$predClass <- factor(predictDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
 p <- ggplot(predictDF) + 
   geom_histogram(aes(x = log(pred/(1-pred)), fill = predClass),
-                 position = "identity",color = "black", bins= 40) +
+                 position = "identity",color = "black", bins= 35) +
   theme_classic() +
   xlab("Epi-MCI Score") +
   ylab("Count") +
@@ -95,26 +99,39 @@ ggsave(p, file = "ADNI/TimeAnalysis/RiskScoreDistribution_ADNI.png", width = 7, 
 # Prepare data for survival analysis
 var <- "MMSE"
 testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
+
+# remove NA values
 testDF <- testDF[!is.na(testDF$MMSE),]
+
+# Only include cognitive impaired
 testDF <- testDF[testDF$MMSE < 24,]
+testDF$Status <- ifelse((testDF$MMSE < 24), "Cognitive Impaired", "Normal")
+
+# Make time point numeric
 testDF$VISCODE[testDF$VISCODE == "bl"] <- 0
 testDF$Time <- as.numeric(str_remove(testDF$VISCODE, "m"))
 testDF$Time <- as.numeric(testDF$Time)
-testDF$Status <- ifelse((testDF$MMSE < 24), "Cognitive Impaired", "Normal")
 
+# Only include up to 48 months in analysis
+testDF <- testDF[testDF$Time <= 48,]
+
+# Set time to earliest time point converted to cognitive impairments
 for (i in unique(testDF$RID)){
   testDF[testDF$RID == i, "Time"] <- min(testDF[testDF$RID == i, "Time"])
 }
 
 testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
+
+
+# Set the samples not converted to a cognitively healthy status at month 49
 normal <- data.frame(RID = setdiff(metaData_fil$RID[!is.na(metaData_fil[,var])], unique(testDF$RID)),
-                     VISCODE = "m85",
+                     VISCODE = "m49",
                      MMSE = NA,
-                     Time = 85,
+                     Time = 49,
                      Status = "Normal")
+
 testDF <- rbind.data.frame(testDF, normal)
-length(unique(testDF$RID))
-length(unique(metaData_fil_time$RID))
+length(unique(testDF$RID)) == length(unique(metaData_fil_time$RID))
 
 
 # Put data into correct format:
@@ -182,30 +199,41 @@ ci(test_roc)
 # Prepare data for survival analysis
 var <- "RAVLT.learning"
 testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
-testDF <- testDF[!is.na(testDF[,var]),]
-sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var])
-mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var])
 
+# remove NA values
+testDF <- testDF[!is.na(testDF[,var]),]
+
+# Only include cognitive impaired
+sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var], na.rm = TRUE)
+mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var], na.rm = TRUE)
 testDF <- testDF[testDF[,var] < mean_var - 2*sd_var,]
+testDF$Status <- ifelse((testDF[,var] < mean_var - 2*sd_var), "Cognitive Impaired", "Normal")
+
+# Make time point numeric
 testDF$VISCODE[testDF$VISCODE == "bl"] <- 0
 testDF$Time <- as.numeric(str_remove(testDF$VISCODE, "m"))
 testDF$Time <- as.numeric(testDF$Time)
-testDF$Status <- ifelse((testDF[,var] < mean_var - 2*sd_var), "Cognitive Impaired", "Normal")
 
+# Only include up to 48 months in analysis
+testDF <- testDF[testDF$Time <= 48,]
+
+# Set time to earliest time point converted to cognitive impairments
 for (i in unique(testDF$RID)){
   testDF[testDF$RID == i, "Time"] <- min(testDF[testDF$RID == i, "Time"])
 }
 
 testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
-
+colnames(testDF) <- c("RID", "VISCODE", "Var", "Status","Time")
+  
+# Set the samples not converted to a cognitively healthy status at month 49
 normal <- data.frame(RID = setdiff(metaData_fil$RID[!is.na(metaData_fil[,var])], unique(testDF$RID)),
-                     VISCODE = "m85",
-                     RAVLT.learning = NA,
-                     Time = 85,
-                     Status = "Normal")
+                     VISCODE = "m49",
+                     Var = NA,
+                     Status = "Normal",
+                     Time = 49)
+
 testDF <- rbind.data.frame(testDF, normal)
-length(unique(testDF$RID))
-length(unique(metaData_fil_time$RID))
+length(unique(testDF$RID)) == length(unique(metaData_fil_time$RID))
 
 # Put data into correct format:
 # 1: censored
@@ -213,7 +241,7 @@ length(unique(metaData_fil_time$RID))
 kaplanDF <- testDF[,c("RID", "Time", "Status")]
 kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
 kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
-kaplanDF$Time <- kaplanDF$Time/12
+kaplanDF$Time <- as.numeric(kaplanDF$Time)/12
 
 # Make survival curve
 kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
@@ -272,29 +300,41 @@ ci(test_roc)
 # Prepare data for survival analysis
 var <- "RAVLT.forgetting"
 testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
-testDF <- testDF[!is.na(testDF[,var]),]
-sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var])
-mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var])
 
+# remove NA values
+testDF <- testDF[!is.na(testDF[,var]),]
+
+# Only include cognitive impaired
+sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var], na.rm = TRUE)
+mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var], na.rm = TRUE)
 testDF <- testDF[testDF[,var] > mean_var + 2*sd_var,]
+testDF$Status <- ifelse((testDF[,var] > mean_var + 2*sd_var), "Cognitive Impaired", "Normal")
+
+# Make time point numeric
 testDF$VISCODE[testDF$VISCODE == "bl"] <- 0
 testDF$Time <- as.numeric(str_remove(testDF$VISCODE, "m"))
 testDF$Time <- as.numeric(testDF$Time)
-testDF$Status <- ifelse((testDF[,var] > mean_var + 2*sd_var), "Cognitive Impaired", "Normal")
 
+# Only include up to 48 months in analysis
+testDF <- testDF[testDF$Time <= 48,]
+
+# Set time to earliest time point converted to cognitive impairments
 for (i in unique(testDF$RID)){
   testDF[testDF$RID == i, "Time"] <- min(testDF[testDF$RID == i, "Time"])
 }
 
 testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
+colnames(testDF) <- c("RID", "VISCODE", "Var", "Status","Time")
+  
+# Set the samples not converted to a cognitively healthy status at month 49
 normal <- data.frame(RID = setdiff(metaData_fil$RID[!is.na(metaData_fil[,var])], unique(testDF$RID)),
-                     VISCODE = "m85",
-                     RAVLT.forgetting = NA,
-                     Time = 85,
-                     Status = "Normal")
+                     VISCODE = "m49",
+                     Var = NA,
+                     Status = "Normal",
+                     Time = 49)
+
 testDF <- rbind.data.frame(testDF, normal)
-length(unique(testDF$RID))
-length(unique(metaData_fil_time$RID))
+length(unique(testDF$RID)) == length(unique(metaData_fil_time$RID))
 
 # Put data into correct format:
 # 1: censored
@@ -302,7 +342,7 @@ length(unique(metaData_fil_time$RID))
 kaplanDF <- testDF[,c("RID", "Time", "Status")]
 kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
 kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
-kaplanDF$Time <- kaplanDF$Time/12
+kaplanDF$Time <- as.numeric(kaplanDF$Time)/12
 
 # Make survival curve
 kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
@@ -362,29 +402,41 @@ ci(test_roc)
 # Prepare data for survival analysis
 var <- "RAVLT.perc.forgetting"
 testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
-testDF <- testDF[!is.na(testDF[,var]),]
-sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var])
-mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var])
 
+# remove NA values
+testDF <- testDF[!is.na(testDF[,var]),]
+
+# Only include cognitive impaired
+sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var], na.rm = TRUE)
+mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var], na.rm = TRUE)
 testDF <- testDF[testDF[,var] > mean_var + 2*sd_var,]
+testDF$Status <- ifelse((testDF[,var] > mean_var + 2*sd_var), "Cognitive Impaired", "Normal")
+
+# Make time point numeric
 testDF$VISCODE[testDF$VISCODE == "bl"] <- 0
 testDF$Time <- as.numeric(str_remove(testDF$VISCODE, "m"))
 testDF$Time <- as.numeric(testDF$Time)
-testDF$Status <- ifelse((testDF[,var] > mean_var + 2*sd_var), "Cognitive Impaired", "Normal")
 
+# Only include up to 48 months in analysis
+testDF <- testDF[testDF$Time <= 48,]
+
+# Set time to earliest time point converted to cognitive impairments
 for (i in unique(testDF$RID)){
   testDF[testDF$RID == i, "Time"] <- min(testDF[testDF$RID == i, "Time"])
 }
 
 testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
+colnames(testDF) <- c("RID", "VISCODE", "Var", "Status","Time")
+
+# Set the samples not converted to a cognitively healthy status at month 49
 normal <- data.frame(RID = setdiff(metaData_fil$RID[!is.na(metaData_fil[,var])], unique(testDF$RID)),
-                     VISCODE = "m85",
-                     RAVLT.perc.forgetting = NA,
-                     Time = 85,
-                     Status = "Normal")
+                     VISCODE = "m49",
+                     Var = NA,
+                     Status = "Normal",
+                     Time = 49)
+
 testDF <- rbind.data.frame(testDF, normal)
-length(unique(testDF$RID))
-length(unique(metaData_fil_time$RID))
+length(unique(testDF$RID)) == length(unique(metaData_fil_time$RID))
 
 # Put data into correct format:
 # 1: censored
@@ -392,7 +444,7 @@ length(unique(metaData_fil_time$RID))
 kaplanDF <- testDF[,c("RID", "Time", "Status")]
 kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
 kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
-kaplanDF$Time <- kaplanDF$Time/12
+kaplanDF$Time <- as.numeric(kaplanDF$Time)/12
 
 # Make survival curve
 kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
@@ -450,29 +502,41 @@ ci(test_roc)
 # Prepare data for survival analysis
 var <- "RAVLT.immediate"
 testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
-testDF <- testDF[!is.na(testDF[,var]),]
-sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var])
-mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var])
 
+# remove NA values
+testDF <- testDF[!is.na(testDF[,var]),]
+
+# Only include cognitive impaired
+sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var], na.rm = TRUE)
+mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var], na.rm = TRUE)
 testDF <- testDF[testDF[,var] < mean_var - 2*sd_var,]
+testDF$Status <- ifelse((testDF[,var] < mean_var - 2*sd_var), "Cognitive Impaired", "Normal")
+
+# Make time point numeric
 testDF$VISCODE[testDF$VISCODE == "bl"] <- 0
 testDF$Time <- as.numeric(str_remove(testDF$VISCODE, "m"))
 testDF$Time <- as.numeric(testDF$Time)
-testDF$Status <- ifelse((testDF[,var] < mean_var - 2*sd_var), "Cognitive Impaired", "Normal")
 
+# Only include up to 48 months in analysis
+testDF <- testDF[testDF$Time <= 48,]
+
+# Set time to earliest time point converted to cognitive impairments
 for (i in unique(testDF$RID)){
   testDF[testDF$RID == i, "Time"] <- min(testDF[testDF$RID == i, "Time"])
 }
 
 testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
+colnames(testDF) <- c("RID", "VISCODE", "Var", "Status","Time")
+
+# Set the samples not converted to a cognitively healthy status at month 49
 normal <- data.frame(RID = setdiff(metaData_fil$RID[!is.na(metaData_fil[,var])], unique(testDF$RID)),
-                     VISCODE = "m85",
-                     RAVLT.immediate = NA,
-                     Time = 85,
-                     Status = "Normal")
+                     VISCODE = "m49",
+                     Var = NA,
+                     Status = "Normal",
+                     Time = 49)
+
 testDF <- rbind.data.frame(testDF, normal)
-length(unique(testDF$RID))
-length(unique(metaData_fil_time$RID))
+length(unique(testDF$RID)) == length(unique(metaData_fil_time$RID))
 
 # Put data into correct format:
 # 1: censored
@@ -480,7 +544,7 @@ length(unique(metaData_fil_time$RID))
 kaplanDF <- testDF[,c("RID", "Time", "Status")]
 kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
 kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
-kaplanDF$Time <- kaplanDF$Time/12
+kaplanDF$Time <- as.numeric(kaplanDF$Time)/12
 
 # Make survival curve
 kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
@@ -539,29 +603,41 @@ ci(test_roc)
 # Prepare data for survival analysis
 var <- "ADASQ4"
 testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
-testDF <- testDF[!is.na(testDF[,var]),]
-sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var])
-mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var])
 
+# remove NA values
+testDF <- testDF[!is.na(testDF[,var]),]
+
+# Only include cognitive impaired
+sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var], na.rm = TRUE)
+mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var], na.rm = TRUE)
 testDF <- testDF[testDF[,var] > mean_var + 2*sd_var,]
+testDF$Status <- ifelse((testDF[,var] > mean_var + 2*sd_var), "Cognitive Impaired", "Normal")
+
+# Make time point numeric
 testDF$VISCODE[testDF$VISCODE == "bl"] <- 0
 testDF$Time <- as.numeric(str_remove(testDF$VISCODE, "m"))
 testDF$Time <- as.numeric(testDF$Time)
-testDF$Status <- ifelse((testDF[,var] > mean_var + 2*sd_var), "Cognitive Impaired", "Normal")
 
+# Only include up to 48 months in analysis
+testDF <- testDF[testDF$Time <= 48,]
+
+# Set time to earliest time point converted to cognitive impairments
 for (i in unique(testDF$RID)){
   testDF[testDF$RID == i, "Time"] <- min(testDF[testDF$RID == i, "Time"])
 }
 
 testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
+colnames(testDF) <- c("RID", "VISCODE", "Var", "Status","Time")
+
+# Set the samples not converted to a cognitively healthy status at month 49
 normal <- data.frame(RID = setdiff(metaData_fil$RID[!is.na(metaData_fil[,var])], unique(testDF$RID)),
-                     VISCODE = "m85",
-                     ADASQ4 = NA,
-                     Time = 85,
-                     Status = "Normal")
+                     VISCODE = "m49",
+                     Var = NA,
+                     Status = "Normal",
+                     Time = 49)
+
 testDF <- rbind.data.frame(testDF, normal)
-length(unique(testDF$RID))
-length(unique(metaData_fil_time$RID))
+length(unique(testDF$RID)) == length(unique(metaData_fil_time$RID))
 
 # Put data into correct format:
 # 1: censored
@@ -569,7 +645,7 @@ length(unique(metaData_fil_time$RID))
 kaplanDF <- testDF[,c("RID", "Time", "Status")]
 kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
 kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
-kaplanDF$Time <- kaplanDF$Time/12
+kaplanDF$Time <- as.numeric(kaplanDF$Time)/12
 
 # Make survival curve
 kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
@@ -582,7 +658,7 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
   ylab("Probability of\nnormal cognition") +
   xlab("Follow-up time (years)") +
   #scale_x_continuous(breaks = c(0,2,4,6,8)) +
-  ggtitle(var) +
+  ggtitle("ADAS-Q4") +
   #xlim(c(0,8)) +
   theme(legend.title = element_blank(),
         legend.position = "bottom",
@@ -628,29 +704,41 @@ ci(test_roc)
 # Prepare data for survival analysis
 var <- "ADAS13"
 testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
-testDF <- testDF[!is.na(testDF[,var]),]
-sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var])
-mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var])
 
+# remove NA values
+testDF <- testDF[!is.na(testDF[,var]),]
+
+# Only include cognitive impaired
+sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var], na.rm = TRUE)
+mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var], na.rm = TRUE)
 testDF <- testDF[testDF[,var] > mean_var + 2*sd_var,]
+testDF$Status <- ifelse((testDF[,var] > mean_var + 2*sd_var), "Cognitive Impaired", "Normal")
+
+# Make time point numeric
 testDF$VISCODE[testDF$VISCODE == "bl"] <- 0
 testDF$Time <- as.numeric(str_remove(testDF$VISCODE, "m"))
 testDF$Time <- as.numeric(testDF$Time)
-testDF$Status <- ifelse((testDF[,var] > mean_var + 2*sd_var), "Cognitive Impaired", "Normal")
 
+# Only include up to 48 months in analysis
+testDF <- testDF[testDF$Time <= 48,]
+
+# Set time to earliest time point converted to cognitive impairments
 for (i in unique(testDF$RID)){
   testDF[testDF$RID == i, "Time"] <- min(testDF[testDF$RID == i, "Time"])
 }
 
 testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
+colnames(testDF) <- c("RID", "VISCODE", "Var", "Status","Time")
+
+# Set the samples not converted to a cognitively healthy status at month 49
 normal <- data.frame(RID = setdiff(metaData_fil$RID[!is.na(metaData_fil[,var])], unique(testDF$RID)),
-                     VISCODE = "m85",
-                     ADAS13 = NA,
-                     Time = 85,
-                     Status = "Normal")
+                     VISCODE = "m49",
+                     Var = NA,
+                     Status = "Normal",
+                     Time = 49)
+
 testDF <- rbind.data.frame(testDF, normal)
-length(unique(testDF$RID))
-length(unique(metaData_fil_time$RID))
+length(unique(testDF$RID)) == length(unique(metaData_fil_time$RID))
 
 # Put data into correct format:
 # 1: censored
@@ -658,7 +746,7 @@ length(unique(metaData_fil_time$RID))
 kaplanDF <- testDF[,c("RID", "Time", "Status")]
 kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
 kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
-kaplanDF$Time <- kaplanDF$Time/12
+kaplanDF$Time <- as.numeric(kaplanDF$Time)/12
 
 # Make survival curve
 kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
@@ -717,29 +805,41 @@ ci(test_roc)
 # Prepare data for survival analysis
 var <- "ADAS11"
 testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
-testDF <- testDF[!is.na(testDF[,var]),]
-sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var])
-mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var])
 
+# remove NA values
+testDF <- testDF[!is.na(testDF[,var]),]
+
+# Only include cognitive impaired
+sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var], na.rm = TRUE)
+mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var], na.rm = TRUE)
 testDF <- testDF[testDF[,var] > mean_var + 2*sd_var,]
+testDF$Status <- ifelse((testDF[,var] > mean_var + 2*sd_var), "Cognitive Impaired", "Normal")
+
+# Make time point numeric
 testDF$VISCODE[testDF$VISCODE == "bl"] <- 0
 testDF$Time <- as.numeric(str_remove(testDF$VISCODE, "m"))
 testDF$Time <- as.numeric(testDF$Time)
-testDF$Status <- ifelse((testDF[,var] > mean_var + 2*sd_var), "Cognitive Impaired", "Normal")
 
+# Only include up to 48 months in analysis
+testDF <- testDF[testDF$Time <= 48,]
+
+# Set time to earliest time point converted to cognitive impairments
 for (i in unique(testDF$RID)){
   testDF[testDF$RID == i, "Time"] <- min(testDF[testDF$RID == i, "Time"])
 }
 
 testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
+colnames(testDF) <- c("RID", "VISCODE", "Var", "Status","Time")
+
+# Set the samples not converted to a cognitively healthy status at month 49
 normal <- data.frame(RID = setdiff(metaData_fil$RID[!is.na(metaData_fil[,var])], unique(testDF$RID)),
-                     VISCODE = "m85",
-                     ADAS11 = NA,
-                     Time = max(testDF$Time) + 1,
-                     Status = "Normal")
+                     VISCODE = "m49",
+                     Var = NA,
+                     Status = "Normal",
+                     Time = 49)
+
 testDF <- rbind.data.frame(testDF, normal)
-length(unique(testDF$RID))
-length(unique(metaData_fil_time$RID))
+length(unique(testDF$RID)) == length(unique(metaData_fil_time$RID))
 
 # Put data into correct format:
 # 1: censored
@@ -747,7 +847,7 @@ length(unique(metaData_fil_time$RID))
 kaplanDF <- testDF[,c("RID", "Time", "Status")]
 kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
 kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
-kaplanDF$Time <- kaplanDF$Time/12
+kaplanDF$Time <- as.numeric(kaplanDF$Time)/12
 
 # Make survival curve
 kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
@@ -806,29 +906,41 @@ ci(test_roc)
 # Prepare data for survival analysis
 var <- "LDELTOTAL"
 testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
-testDF <- testDF[!is.na(testDF[,var]),]
-sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var])
-mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var])
 
+# remove NA values
+testDF <- testDF[!is.na(testDF[,var]),]
+
+# Only include cognitive impaired
+sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var], na.rm = TRUE)
+mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var], na.rm = TRUE)
 testDF <- testDF[testDF[,var] < mean_var - 2*sd_var,]
+testDF$Status <- ifelse((testDF[,var] < mean_var - 2*sd_var), "Cognitive Impaired", "Normal")
+
+# Make time point numeric
 testDF$VISCODE[testDF$VISCODE == "bl"] <- 0
 testDF$Time <- as.numeric(str_remove(testDF$VISCODE, "m"))
 testDF$Time <- as.numeric(testDF$Time)
-testDF$Status <- ifelse((testDF[,var] < mean_var - 2*sd_var), "Cognitive Impaired", "Normal")
 
+# Only include up to 48 months in analysis
+testDF <- testDF[testDF$Time <= 48,]
+
+# Set time to earliest time point converted to cognitive impairments
 for (i in unique(testDF$RID)){
   testDF[testDF$RID == i, "Time"] <- min(testDF[testDF$RID == i, "Time"])
 }
 
 testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
+colnames(testDF) <- c("RID", "VISCODE", "Var", "Status","Time")
+
+# Set the samples not converted to a cognitively healthy status at month 49
 normal <- data.frame(RID = setdiff(metaData_fil$RID[!is.na(metaData_fil[,var])], unique(testDF$RID)),
-                     VISCODE = "m85",
-                     LDELTOTAL = NA,
-                     Time = max(testDF$Time) + 1,
-                     Status = "Normal")
+                     VISCODE = "m49",
+                     Var = NA,
+                     Status = "Normal",
+                     Time = 49)
+
 testDF <- rbind.data.frame(testDF, normal)
-length(unique(testDF$RID))
-length(unique(metaData_fil_time$RID))
+length(unique(testDF$RID)) == length(unique(metaData_fil_time$RID))
 
 # Put data into correct format:
 # 1: censored
@@ -836,7 +948,7 @@ length(unique(metaData_fil_time$RID))
 kaplanDF <- testDF[,c("RID", "Time", "Status")]
 kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
 kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
-kaplanDF$Time <- kaplanDF$Time/12
+kaplanDF$Time <- as.numeric(kaplanDF$Time)/12
 
 # Make survival curve
 kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
@@ -894,29 +1006,41 @@ ci(test_roc)
 # Prepare data for survival analysis
 var <- "TRABSCOR"
 testDF <- metaData_fil_time[,c("RID", "VISCODE", var)]
+
+# remove NA values
 testDF <- testDF[!is.na(testDF[,var]),]
+
+# Only include cognitive impaired
 sd_var <- sd(metaData_fil[metaData_fil$DX == "CN",var], na.rm = TRUE)
 mean_var <- mean(metaData_fil[metaData_fil$DX == "CN",var], na.rm = TRUE)
-
 testDF <- testDF[testDF[,var] > mean_var + 2*sd_var,]
+testDF$Status <- ifelse((testDF[,var] > mean_var + 2*sd_var), "Cognitive Impaired", "Normal")
+
+# Make time point numeric
 testDF$VISCODE[testDF$VISCODE == "bl"] <- 0
 testDF$Time <- as.numeric(str_remove(testDF$VISCODE, "m"))
 testDF$Time <- as.numeric(testDF$Time)
-testDF$Status <- ifelse((testDF[,var] > mean_var + 2*sd_var), "Cognitive Impaired", "Normal")
 
+# Only include up to 48 months in analysis
+testDF <- testDF[testDF$Time <= 48,]
+
+# Set time to earliest time point converted to cognitive impairments
 for (i in unique(testDF$RID)){
   testDF[testDF$RID == i, "Time"] <- min(testDF[testDF$RID == i, "Time"])
 }
 
 testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
+colnames(testDF) <- c("RID", "VISCODE", "Var", "Status","Time")
+
+# Set the samples not converted to a cognitively healthy status at month 49
 normal <- data.frame(RID = setdiff(metaData_fil$RID[!is.na(metaData_fil[,var])], unique(testDF$RID)),
-                     VISCODE = "m85",
-                     TRABSCOR = NA,
-                     Time = max(testDF$Time) + 1,
-                     Status = "Normal")
+                     VISCODE = "m49",
+                     Var = NA,
+                     Status = "Normal",
+                     Time = 49)
+
 testDF <- rbind.data.frame(testDF, normal)
-length(unique(testDF$RID))
-length(unique(metaData_fil_time$RID))
+length(unique(testDF$RID)) == length(unique(metaData_fil_time$RID))
 
 # Put data into correct format:
 # 1: censored
@@ -924,7 +1048,7 @@ length(unique(metaData_fil_time$RID))
 kaplanDF <- testDF[,c("RID", "Time", "Status")]
 kaplanDF$Test <- ifelse(kaplanDF$Status == "Normal",1,2)
 kaplanDF <- inner_join(kaplanDF, predictDF, by = c("RID" = "RID"))
-kaplanDF$Time <- kaplanDF$Time/12
+kaplanDF$Time <- as.numeric(kaplanDF$Time)/12
 
 # Make survival curve
 kaplanDF$predClass <- factor(kaplanDF$predClass, levels = c("Low risk", "Intermediate risk", "High risk"))
