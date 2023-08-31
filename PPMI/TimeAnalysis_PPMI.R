@@ -92,11 +92,28 @@ ggsave(p, file = "PPMI/TimeAnalysis/RiskScoreDistribution.png", width = 7, heigh
 # Prepare data into correct format for survival analysis
 testDF <- gather(as.data.frame(cogcat[,3:11]))
 testDF$PATNO <- rep(cogcat$PATNO, 9)
+
+# Remove missing values
 testDF <- testDF[!is.na(testDF$value),]
-testDF <- testDF[(testDF$value == "Dementia") | (testDF$value == "MCI"),]
+
+# Make time point numeric
 testDF$Time <- as.numeric(str_remove(testDF$key, "X"))
+
+# Set cognitive impairment status
 testDF$Status <- ifelse((testDF$value == "Dementia") | (testDF$value == "MCI"), "Cognitive Impaired", "Normal")
 
+# Only keep samples with diagnosis available at last or second-to-last time point
+keep_samples <- unique(testDF$PATNO[(testDF$Status == "Cognitive Impaired") & testDF$Time <= 8])
+keep_samples <- union(keep_samples, 
+                      testDF$PATNO[(testDF$Time == 7) | (testDF$Time == 8)])
+
+testDF <- testDF[testDF$PATNO %in% keep_samples,]
+
+# Only include cognitive impaired
+testDF <- testDF[testDF$Status == "Cognitive Impaired",]
+
+
+# Set time to earliest time point converted to cognitive impairments
 for (i in unique(testDF$PATNO)){
   testDF[testDF$PATNO == i, "Time"] <- min(testDF[testDF$PATNO == i, "Time"])
 }
@@ -104,7 +121,7 @@ for (i in unique(testDF$PATNO)){
 testDF <- testDF[!duplicated(testDF[,3:5]),]
 normal <- data.frame(key = "X9",
                      value = "Normal",
-                     PATNO = setdiff(cogcat$PATNO, unique(testDF$PATNO)),
+                     PATNO = setdiff(keep_samples, unique(testDF$PATNO)),
                      Time = 9,
                      Status = "Normal")
 testDF <- rbind.data.frame(testDF, normal)
@@ -154,11 +171,12 @@ survdiff(Surv(Time, Test) ~ predClass,
          data = kaplanDF1)
 
 # Cox regression
-coxph(Surv(Time, Test) ~ predClass + Age, 
-         data = kaplanDF) %>% 
+coxph(Surv(Time, Test) ~ predClass, 
+         data = kaplanDF1) %>% 
   tbl_regression(exp = TRUE) 
 
 # AUROC
 kaplanDF$Status1 <- factor(kaplanDF$Status, levels = c("Normal", "Cognitive Impaired"))
 test_roc <- pROC::roc(kaplanDF$Status1, kaplanDF$pred)
+auc(test_roc)
 ci(test_roc)

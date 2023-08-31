@@ -15,3 +15,6 @@
 
 # Ignore .Rhistory files
 .Rhistory
+
+# Ignore example.csv files
+example.csv
