@@ -2,9 +2,9 @@
 ![status](https://badgen.net/badge/Status/Complete/green)
 
 <h1 align="center">
-Blood-derived DNA methylation-based
+Blood-based multivariate methylation risk score
    <br>
-prediction of midlife dementia risk
+for cognitive impairment and dementia
 </h1>
 
 <p align="center">
@@ -12,13 +12,15 @@ prediction of midlife dementia risk
      ·
 <a href="https://github.com/jarnokoetsier/DementiaRiskPrediction/blob/main/README.md#Methods">Methods</a>
      ·
+<a href="https://github.com/jarnokoetsier/DementiaRiskPrediction/blob/main/README.md#Shiny">Shiny</a>
+     ·
 <a href="https://github.com/jarnokoetsier/DementiaRiskPrediction/blob/main/README.md#Software">Software</a>
      ·
 <a href="https://github.com/jarnokoetsier/DementiaRiskPrediction/blob/main/README.md#Contact">Contact</a>
 </p>
 
 <p align="center">
-This repository contains the scripts used for the project <I>"Blood-derived DNA methylation-based prediction of midlife dementia risk"</i>.
+This repository contains the scripts used for the project <i>"Blood-based multivariate methylation risk score for cognitive impairment and dementia"</i>.
 </p>
 <br>
 
@@ -35,9 +37,14 @@ The applied methodology consists of four main steps:
 3. **Model interpretation** ([here](https://github.com/jarnokoetsier/DementiaRiskPrediction/tree/main/Models/ModelInterpretation)).
 4. **Model extension** with genetic and cerebral spinal fluid biomarkers in the [EMIF-AD](https://github.com/jarnokoetsier/DementiaRiskPrediction/tree/main/EMIF-AD) cohort.
 
+## Shiny
+You can also generate the multivariate risk scores for cognitive impairment and dementia youself in an R Shiny application:
+`runApp('Shiny')`
+Please note that it takes a long time to launch the app for the first time, because large models (> 10 GB) are being downloaded from [Zenodo](https://zenodo.org/record/8306113).
+
 ## Software
 * `R version 4.1.2`
 * `RStudio version 2021.09.02+382`
 
 ## Contact
-Feel free to contact me via email: j.koetsier@student.maastrichtuniversity.nl
+Feel free to contact me via email: jarno.koetsier@maastrichtuniversity.nl
