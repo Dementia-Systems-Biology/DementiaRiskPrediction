@@ -8,6 +8,28 @@ library(DT)
 library(shinyWidgets)
 library(shinycssloaders)
 
+# Install files that are not in Shiny directory
+all_files <- list.files()
+files <- c("finalModels.RData", 
+           "all_cpgs.RData", 
+           "example.csv",
+           "Fit_EMIF_MCI_RF.RData")
+
+for (f in files){
+  if (!(f %in% all_files)){
+    download.file(url = paste0("https://zenodo.org/record/8306113/files/",f), 
+                  f, mode = "wb")
+  }
+}
+
+if (!("Predictors_Shiny_by_Groups.csv" %in% all_files)){
+  download.file(url = "https://zenodo.org/record/4646300/files/Predictors_Shiny_by_Groups.csv", 
+                "Predictors_Shiny_by_Groups.csv", mode = "wb")
+}
+
+
+
+
 # Load EXTEND models
 load("finalModels.RData")
 
