@@ -17,15 +17,19 @@ server <- function(input, output, session){
   # Read data
   
   ################################################################################
-  
-  observeEvent(input$startAnalysis, {
+
+  observeEvent(input$startAnalysis,{
+    
+    # Data path
+    path <- reactive({
+      input$uploadcsv$datapath
+    })
     
     # Load data
-    
     data_all <- reactive({
       
       # Require data input
-      req(input$uploadtxtin$datapath)
+      req(path())
       
       # Show loading message
       showModal(modalDialog(title = h4(strong("Reading data..."),
@@ -38,7 +42,7 @@ server <- function(input, output, session){
       message("Start data reading")
       
       # Read data
-      data_all <- fread(input$uploadtxtin$datapath)
+      data_all <- fread(path())
       
       # Format data
       data_all <- as.data.frame(data_all)
