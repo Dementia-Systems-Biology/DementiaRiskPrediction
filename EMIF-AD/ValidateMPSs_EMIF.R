@@ -1,5 +1,5 @@
 # ============================================================================ #
-# File: ValidateMRSs_EMIF.R
+# File: ValidateMPSs_EMIF.R
 # Author: Jarno Koetsier
 # Date: August 6, 2023
 # Description: Validate the performance of the MRSs in the EMIF-AD cohort.

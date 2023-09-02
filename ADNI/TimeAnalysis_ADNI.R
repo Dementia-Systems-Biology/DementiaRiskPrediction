@@ -61,6 +61,7 @@ predictDF <- unique(predictDF)
 
 
 # Epi-MCI (RF-RFE) score as predictor
+predictDF$RID <- as.character(predictDF$RID)
 predictDF$predClass <- "Intermediate risk"
 predictDF$predClass[predictDF$pred < quantile(predictDF$pred,0.33)] <- "Low risk"
 predictDF$predClass[predictDF$pred > quantile(predictDF$pred,0.67)] <- "High risk"
@@ -163,8 +164,8 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
   #xlim(c(0,8)) +
   theme(legend.title = element_blank(),
         legend.position = "bottom",
-        axis.title = element_text(size = 12),
-        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
         legend.text = element_text(size = 12),
         plot.title = element_text(hjust = 0.5,
                                   face = "bold",
@@ -230,7 +231,6 @@ keep_samples <- unique(testDF$RID[(testDF$Status == "Cognitive Impaired") & test
 keep_samples <- union(keep_samples, 
                       testDF$RID[(testDF$VISCODE == "m48") | (testDF$VISCODE == "m42")])
 
-keep_samples <- unique(testDF$RID[(testDF$VISCODE == "m48") | (testDF$VISCODE == "m42")])
 testDF <- testDF[testDF$RID %in% keep_samples,]
 
 # Only include cognitive impaired
@@ -248,7 +248,7 @@ testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
 colnames(testDF) <- c("RID", "VISCODE", "Var","Time","Status")
 
 # Set the samples not converted to a cognitively healthy status at month 49
-normal <- data.frame(RID = setdiff(keep_samples, unique(testDF$RID)),
+normal <- data.frame(RID = as.character(setdiff(keep_samples, unique(testDF$RID))),
                      VISCODE = "m49",
                      Var = NA,
                      Time = 49,
@@ -282,8 +282,8 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
   #xlim(c(0,8)) +
   theme(legend.title = element_blank(),
         legend.position = "bottom",
-        axis.title = element_text(size = 12),
-        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
         legend.text = element_text(size = 12),
         plot.title = element_text(hjust = 0.5,
                                   face = "bold",
@@ -362,7 +362,7 @@ testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
 colnames(testDF) <- c("RID", "VISCODE", "Var","Time","Status")
 
 # Set the samples not converted to a cognitively healthy status at month 49
-normal <- data.frame(RID = setdiff(keep_samples, unique(testDF$RID)),
+normal <- data.frame(RID = as.character(setdiff(keep_samples, unique(testDF$RID))),
                      VISCODE = "m49",
                      Var = NA,
                      Time = 49,
@@ -396,8 +396,8 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
   #xlim(c(0,8)) +
   theme(legend.title = element_blank(),
         legend.position = "bottom",
-        axis.title = element_text(size = 12),
-        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
         legend.text = element_text(size = 12),
         plot.title = element_text(hjust = 0.5,
                                   face = "bold",
@@ -476,7 +476,7 @@ testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
 colnames(testDF) <- c("RID", "VISCODE", "Var","Time","Status")
 
 # Set the samples not converted to a cognitively healthy status at month 49
-normal <- data.frame(RID = setdiff(keep_samples, unique(testDF$RID)),
+normal <- data.frame(RID = as.character(setdiff(keep_samples, unique(testDF$RID))),
                      VISCODE = "m49",
                      Var = NA,
                      Time = 49,
@@ -510,8 +510,8 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
   #xlim(c(0,8)) +
   theme(legend.title = element_blank(),
         legend.position = "bottom",
-        axis.title = element_text(size = 12),
-        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
         legend.text = element_text(size = 12),
         plot.title = element_text(hjust = 0.5,
                                   face = "bold",
@@ -589,7 +589,7 @@ testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
 colnames(testDF) <- c("RID", "VISCODE", "Var","Time","Status")
 
 # Set the samples not converted to a cognitively healthy status at month 49
-normal <- data.frame(RID = setdiff(keep_samples, unique(testDF$RID)),
+normal <- data.frame(RID = as.character(setdiff(keep_samples, unique(testDF$RID))),
                      VISCODE = "m49",
                      Var = NA,
                      Time = 49,
@@ -623,8 +623,8 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
   #xlim(c(0,8)) +
   theme(legend.title = element_blank(),
         legend.position = "bottom",
-        axis.title = element_text(size = 12),
-        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
         legend.text = element_text(size = 12),
         plot.title = element_text(hjust = 0.5,
                                   face = "bold",
@@ -703,7 +703,7 @@ testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
 colnames(testDF) <- c("RID", "VISCODE", "Var","Time","Status")
 
 # Set the samples not converted to a cognitively healthy status at month 49
-normal <- data.frame(RID = setdiff(keep_samples, unique(testDF$RID)),
+normal <- data.frame(RID = as.character(setdiff(keep_samples, unique(testDF$RID))),
                      VISCODE = "m49",
                      Var = NA,
                      Time = 49,
@@ -737,8 +737,8 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
   #xlim(c(0,8)) +
   theme(legend.title = element_blank(),
         legend.position = "bottom",
-        axis.title = element_text(size = 12),
-        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
         legend.text = element_text(size = 12),
         plot.title = element_text(hjust = 0.5,
                                   face = "bold",
@@ -817,7 +817,7 @@ testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
 colnames(testDF) <- c("RID", "VISCODE", "Var","Time","Status")
 
 # Set the samples not converted to a cognitively healthy status at month 49
-normal <- data.frame(RID = setdiff(keep_samples, unique(testDF$RID)),
+normal <- data.frame(RID = as.character(setdiff(keep_samples, unique(testDF$RID))),
                      VISCODE = "m49",
                      Var = NA,
                      Time = 49,
@@ -851,8 +851,8 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
   #xlim(c(0,8)) +
   theme(legend.title = element_blank(),
         legend.position = "bottom",
-        axis.title = element_text(size = 12),
-        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
         legend.text = element_text(size = 12),
         plot.title = element_text(hjust = 0.5,
                                   face = "bold",
@@ -931,7 +931,7 @@ testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
 colnames(testDF) <- c("RID", "VISCODE", "Var","Time","Status")
 
 # Set the samples not converted to a cognitively healthy status at month 49
-normal <- data.frame(RID = setdiff(keep_samples, unique(testDF$RID)),
+normal <- data.frame(RID = as.character(setdiff(keep_samples, unique(testDF$RID))),
                      VISCODE = "m49",
                      Var = NA,
                      Time = 49,
@@ -965,8 +965,8 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
   #xlim(c(0,8)) +
   theme(legend.title = element_blank(),
         legend.position = "bottom",
-        axis.title = element_text(size = 12),
-        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
         legend.text = element_text(size = 12),
         plot.title = element_text(hjust = 0.5,
                                   face = "bold",
@@ -1045,7 +1045,7 @@ testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
 colnames(testDF) <- c("RID", "VISCODE", "Var","Time","Status")
 
 # Set the samples not converted to a cognitively healthy status at month 49
-normal <- data.frame(RID = setdiff(keep_samples, unique(testDF$RID)),
+normal <- data.frame(RID = as.character(setdiff(keep_samples, unique(testDF$RID))),
                      VISCODE = "m49",
                      Var = NA,
                      Time = 49,
@@ -1079,8 +1079,8 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
   #xlim(c(0,8)) +
   theme(legend.title = element_blank(),
         legend.position = "bottom",
-        axis.title = element_text(size = 12),
-        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
         legend.text = element_text(size = 12),
         plot.title = element_text(hjust = 0.5,
                                   face = "bold",
@@ -1158,7 +1158,7 @@ testDF <- testDF[!duplicated(testDF[,c(1,4,5)]),]
 colnames(testDF) <- c("RID", "VISCODE", "Var","Time","Status")
 
 # Set the samples not converted to a cognitively healthy status at month 49
-normal <- data.frame(RID = setdiff(keep_samples, unique(testDF$RID)),
+normal <- data.frame(RID = as.character(setdiff(keep_samples, unique(testDF$RID))),
                      VISCODE = "m49",
                      Var = NA,
                      Time = 49,
@@ -1192,8 +1192,8 @@ p <- survfit2(Surv(Time, Test) ~ predClass, data = kaplanDF) %>%
   #xlim(c(0,8)) +
   theme(legend.title = element_blank(),
         legend.position = "bottom",
-        axis.title = element_text(size = 12),
-        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
         legend.text = element_text(size = 12),
         plot.title = element_text(hjust = 0.5,
                                   face = "bold",

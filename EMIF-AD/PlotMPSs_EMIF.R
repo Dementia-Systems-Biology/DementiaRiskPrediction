@@ -1,8 +1,8 @@
 # ============================================================================ #
-# File: PlotMRSs_EMIF.R
+# File: PlotMPSs_EMIF.R
 # Author: Jarno Koetsier
 # Date: August 6, 2023
-# Description: Plot distribution of MRSs among the diagnostic groups in the 
+# Description: Plot distribution of MPSs among the diagnostic groups in the 
 #              EMIF-AD cohort.
 # ============================================================================ #
 
@@ -42,13 +42,13 @@ plotDF$Diagnosis[plotDF$Diagnosis == "NL"] <- "Control"
 plotDF$Diagnosis <- factor(plotDF$Diagnosis,
                            levels = c("Control", "SCI","MCI", "AD")) 
 
-# For each risk factor (MRS), make boxplot
+# For each risk factor (MPS), make boxplot
 for (i in 1:ncol(testDF)){
   
   p <- ggplot(plotDF[plotDF$key == colnames(testDF)[i],]) +
     geom_boxplot(aes(x = Diagnosis, y = value, fill = Diagnosis)) +
     xlab(NULL) +
-    ylab("Methylation Risk Score") +
+    ylab("Methylation Profile Score") +
     ggtitle(colnames(testDF)[i]) +
     scale_fill_manual(values = c("#FCBBA1","#FB6A4A","#CB181D","#99000D")) +
     theme_bw() +
@@ -71,7 +71,7 @@ finalPlot <- all +
   plot_layout(ncol = 4, nrow = 4)
 
 # Save plot
-ggsave(finalPlot, file = "EMIF-AD/ModelPerformance/FactorVsDiagnosis.png", width = 12, height = 8)
+ggsave(finalPlot, file = "EMIF-AD/ModelPerformance/FactorVsDiagnosis.jpg", width = 12, height = 8)
 
 # ANOVA (PARAMETRIC)
 test <- aov(value ~ Diagnosis, data = plotDF[plotDF$key== "Depression",])

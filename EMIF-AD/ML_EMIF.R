@@ -2,7 +2,7 @@
 # File: ML_EMIF.R
 # Author: Jarno Koetsier
 # Date: August 6, 2023
-# Description: Machine learning (ML) using MRSs as variables in the EMIF-AD 
+# Description: Machine learning (ML) using MPSs as variables in the EMIF-AD 
 #              cohort.
 # ============================================================================ #
 
@@ -388,6 +388,10 @@ plotDF <- data.frame(EN = log(EN$MCI/(1-EN$MCI)),
 
 save(plotDF, file = "EMIF-AD/Data/plotDF_MCI.RData")
 
+# Significant difference between age and RF prediction
+roc_RF <- pROC::roc(plotDF$Y, plotDF$RF)
+roc_EpiAge <- pROC::roc(plotDF$Y, plotDF$EpiAge)
+pROC::roc.test(roc_RF,roc_EpiAge)
 
 # Check whether the predicted score is significantly associated with MCI status:
 
@@ -410,8 +414,8 @@ summary(model)
 # Calculate sensitivites, specificities and AUC values
 score <- c("EpiAge","EpiCAIDE", "EpiLIBRA","EN", "sPLS", "RF")
 scoreName <- c("Epi-Age:","Epi-CAIDE:","Epi-LIBRA:",
-               "Epi-MCI (EN):", "Epi-MCI (sPLS-DA):", 
-               "Epi-MCI (RF-RFE):")
+               "MMRS-MCI (EN):", "MMRS-MCI (sPLS-DA):", 
+               "MMRS-MCI (RF-RFE):")
 
 ROCplot <- NULL                       # Data frame with sensitivities and specificities
 aucValue <- rep(NA, length(score))    # AUC
@@ -434,7 +438,7 @@ for (i in 1:length(score)){
 
 plotModel <- data.frame(AUC = scoreName,
                         Score = scoreName,
-                        X = 0.50,
+                        X = 0.5,
                         Y = rev(seq(0.05,0.25,length.out = length(aucValue))))
 
 plotAUC <- data.frame(AUC = paste0(aucValue, " (", liValue, "-", uiValue, ")"),
@@ -474,7 +478,7 @@ p <- ggplot(ROCplot) +
                                      face = "italic"))
 
 # Save plot
-ggsave(p, file = "EMIF-AD/ModelPerformance/ROC_MCI_EMIF1.jpg", width = 7, height = 5)
+ggsave(p, file = "EMIF-AD/ModelPerformance/ROC_MCI_EMIF2.jpg", width = 7, height = 5)
 
 
 ###############################################################################
@@ -752,8 +756,8 @@ summary(model)
 # Calculate sensitivites, specificities and AUC values
 score <- c("EpiAge","EpiCAIDE", "EpiLIBRA","EN", "sPLS", "RF")
 scoreName1 <- c("Epi-Age:","Epi-CAIDE:","Epi-LIBRA:",
-                "Epi-AD (EN):", "Epi-AD (sPLS-DA):", 
-                "Epi-AD (RF-RFE):")
+                "MMRS-AD (EN):", "MMRS-AD (sPLS-DA):", 
+                "MMRS-AD (RF-RFE):")
 
 ROCplot <- NULL                       # Data frame with sensitivities and specificities
 aucValue <- rep(NA, length(score))    # AUC
@@ -776,7 +780,7 @@ for (i in 1:length(score)){
 
 plotModel <- data.frame(AUC = scoreName1,
                         Score = scoreName1,
-                        X = 0.50,
+                        X = 0.5,
                         Y = rev(seq(0.05,0.25,length.out = length(aucValue))))
 
 plotAUC <- data.frame(AUC = paste0(aucValue, " (", liValue, "-", uiValue, ")"),
@@ -816,5 +820,5 @@ p <- ggplot(ROCplot) +
                                      face = "italic"))
 
 # Save plot
-ggsave(p, file = "EMIF-AD/ModelPerformance/ROC_AD_EMIF1.jpg", width = 7, height = 5)
+ggsave(p, file = "EMIF-AD/ModelPerformance/ROC_AD_EMIF2.jpg", width = 7, height = 5)
 

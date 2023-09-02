@@ -2,7 +2,7 @@
 # File: ML_EMIF_CSF_PGS.R
 # Author: Jarno Koetsier
 # Date: August 6, 2023
-# Description: Machine learning (ML) using MRSs, PGSs, and CSF biomarkers as 
+# Description: Machine learning (ML) using MPSs, PGSs, and CSF biomarkers as 
 #              variables in the EMIF-AD cohort.
 # ============================================================================ #
 
@@ -426,8 +426,8 @@ plotDF <- data.frame(EN = EN$MCI,
 score <- c("ENonly", "sPLSonly", "RFonly","EN", "sPLS", "RF")
 scoreName <- c("PGSs/CSF (EN):",
                 "PGSs/CSF (sPLS-DA):","PGSs/CSF (RF-RFE):",
-                "MRSs/PGSs/CSF (EN):", "MRSs/PGSs/CSF (sPLS-DA):", 
-                "MRSs/PGSs/CSF (RF-RFE):")
+                "MPSs/PGSs/CSF (EN):", "MPSs/PGSs/CSF (sPLS-DA):", 
+                "MPSs/PGSs/CSF (RF-RFE):")
 ROCplot <- NULL                       # Data frame with sensitivities and specificities
 aucValue <- rep(NA, length(score))    # AUC
 liValue <- rep(NA, length(score))     # lower interval value of AUC

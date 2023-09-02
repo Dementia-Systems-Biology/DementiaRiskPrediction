@@ -2,7 +2,7 @@
 # File: ML_EMIF_CSF.R
 # Author: Jarno Koetsier
 # Date: August 6, 2023
-# Description: Machine learning (ML) using MRSs and CSF biomarkers as 
+# Description: Machine learning (ML) using MPSs and CSF biomarkers as 
 #              variables in the EMIF-AD cohort.
 # ============================================================================ #
 
@@ -56,7 +56,7 @@ Y_test$Y <- factor(ifelse(Y_test$Diagnosis == "NL","Control","MCI"),
                    levels = c("Control", "MCI"))
 
 
-# Combine MRSs and CSF biomarkers
+# Combine MPSs and CSF biomarkers
 Y_train <- Y_train[intersect(samples, rownames(Y_train)),]
 Y_test <- Y_test[intersect(samples, rownames(Y_test)),]
 X_train <- cbind.data.frame(X_train[rownames(Y_train),], CSFbio[rownames(Y_train),])
@@ -104,7 +104,7 @@ performance_metric = "ROC"
 MLmethod = "glmnet"
 
 #=============================================================================#
-# MRS + CSF
+# MPS + CSF
 #=============================================================================#
 
 # Actual training
@@ -171,7 +171,7 @@ roc_test_wo <- pROC::roc(Y_test$Y, testPred$MCI)
 auc(roc_test_wo)
 
 #=============================================================================#
-# CSF + MRS w/o epi-age
+# CSF + MPS w/o epi-age
 #=============================================================================#
 
 # Actual training
@@ -216,7 +216,7 @@ performance_metric = "ROC"
 MLmethod = "spls"
 
 #=============================================================================#
-# MRS + CSF
+# MPS + CSF
 #=============================================================================#
 
 # Actual training
@@ -285,7 +285,7 @@ roc_test_wo <- pROC::roc(Y_test$Y, testPred$MCI)
 auc(roc_test_wo)
 
 #=============================================================================#
-# CSF + MRS w/o epi-age
+# CSF + MPS w/o epi-age
 #=============================================================================#
 
 # Actual training
@@ -312,7 +312,7 @@ auc(roc_test_woa)
 #*****************************************************************************#
 
 #=============================================================================#
-# CSF + MRS
+# CSF + MPS
 #=============================================================================#
 
 which(colnames(X_train) == "ChrAge")
@@ -521,7 +521,7 @@ auc(roc_test_wo)
 
 
 #=============================================================================#
-# CSF + MRS w/o epi-age
+# CSF + MPS w/o epi-age
 #=============================================================================#
 
 X_train1 <- X_train[,-c(10,18)]
@@ -651,8 +651,8 @@ testDF <- data.frame(EN = EN$MCI,
 # Prepare data for plotting
 score <- c("EN_wo", "sPLS_wo", "RF_wo", "EN", "sPLS", "RF")
 scoreName <- c("CSF (EN):", "CSF (sPLS-DA):","CSF (RF-RFE):",
-                "MRSs/CSF (EN):", "MRSs/CSF (sPLS-DA):", 
-                "MRSs/CSF (RF-RFE):")
+                "MPSs/CSF (EN):", "MPSs/CSF (sPLS-DA):", 
+                "MPSs/CSF (RF-RFE):")
 plotDF <- as.data.frame(testDF)
 ROCplot <- NULL
 aucValue <- rep(NA, length(score))

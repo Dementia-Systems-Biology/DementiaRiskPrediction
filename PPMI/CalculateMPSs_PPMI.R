@@ -1,8 +1,8 @@
 # ============================================================================ #
-# File: CalculateMRSs_EMIF.R
+# File: CalculateMRSs_PPMI.R
 # Author: Jarno Koetsier
 # Date: August 6, 2023
-# Description: Calculate the MRSs in the EMIF-AD cohort
+# Description: Calculate the MPSs in the PPMI cohort.
 # ============================================================================ #
 
 # Load packages
@@ -14,9 +14,8 @@ rm(list = ls())
 cat("\014") 
 
 # Load data
-load("EMIF-AD/Data/metaData_EMIF.RData")  # Meta data
-load("EMIF-AD/Data/X_EMIF_imp.RData")     # Imputed methylation data
-
+load("PPMI/Data/metaData_ppmi.RData")
+load("PPMI/Data/X_PPMI_imp.RData")
 
 #################################################################################
 
@@ -24,14 +23,14 @@ load("EMIF-AD/Data/X_EMIF_imp.RData")     # Imputed methylation data
 
 ################################################################################
 
-# Load EXTEND models
+# Load MPS models
 load("Models/MRS_Models/finalModels.RData")
 
 # Predict factors
 factors <- names(finalModels)
-predictedScore_factors <- matrix(NA, nrow = nrow(X_EMIF_imp), ncol = length(factors))
+predictedScore_factors <- matrix(NA, nrow = nrow(X_PPMI_imp), ncol = length(factors))
 colnames(predictedScore_factors) <- factors
-rownames(predictedScore_factors) <- rownames(X_EMIF_imp)
+rownames(predictedScore_factors) <- rownames(X_PPMI_imp)
 for (f in 1:length(factors)){
   f1 <- factors[f]
   model <- finalModels[[f1]]
@@ -41,10 +40,10 @@ for (f in 1:length(factors)){
   
   # Make predictions
   if (f <= 2){
-    predictedScore_factors[,f] <- predict(model, X_EMIF_imp[,features])
+    predictedScore_factors[,f] <- predict(model, X_PPMI_imp[,features])
   }
   if (f > 2){
-    prob <- predict(model, X_EMIF_imp[,features], type = "prob")$Yes
+    prob <- predict(model, X_PPMI_imp[,features], type = "prob")$Yes
     predictedScore_factors[,f] <- log(prob/(1-prob))
   }
   
@@ -54,16 +53,16 @@ predictedScore_factors <- as.data.frame(predictedScore_factors)
 
 #################################################################################
 
-# Hillary Models
+# Marioni Models
 
 ################################################################################
 
 # Read models
 # Models are available at: https://zenodo.org/record/4646300#.ZFJg53ZBxPY
-cpgs <- read.csv("Models/MRS_Models/Predictors_Shiny_by_Groups.csv", header = T) 
+cpgs <- read.csv("Data/Predictors_Shiny_by_Groups.csv", header = T) 
 
 # Load data
-data <- X_EMIF_imp
+data <- X_PPMI_imp
 
 
 # Check if Data needs to be Transposed
@@ -135,7 +134,7 @@ out$ID <- row.names(out)
 out <- out[,c(ncol(out),1:(ncol(out)-1))] 
 colnames(out) <- c("ID", "EpiAge", "Alcohol", "BMI", "BodyFat", "HDL", "Smoking", "WHR")
 
-
+# Combine MPSs in a dataframe
 predictedScore_factors <- cbind.data.frame(predictedScore_factors,
                                            out[,c("EpiAge",
                                                   "Alcohol",
@@ -143,6 +142,6 @@ predictedScore_factors <- cbind.data.frame(predictedScore_factors,
                                                   "HDL",
                                                   "Smoking")])
 
-# Save MRSs
-save(predictedScore_factors, file = "EMIF-AD/Data/predictedScore_factors_EMIF.RData")
-
+# Save data
+save(predictedScore_factors, file = "PPMI/Data/predictedScore_factors_PPMI.RData")
+                     

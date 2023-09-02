@@ -1,5 +1,5 @@
 # ============================================================================ #
-# File: CalculateMRSs_ADNI.R
+# File: CalculateMPSs_ADNI.R
 # Author: Jarno Koetsier
 # Date: August 6, 2023
 # Description: Calculate the MRSs in the ADNI cohort.
@@ -23,7 +23,7 @@ load("ADNI/Data/X_ADNI_imp.RData")
 
 ################################################################################
 
-# Load MRS models
+# Load MPS models
 load("Models/MRS_Models/finalModels.RData")
 
 # Predict factors
@@ -142,5 +142,5 @@ predictedScore_factors <- cbind.data.frame(predictedScore_factors,
                                                   "HDL",
                                                   "Smoking")])
 
-# Save MRSs
+# Save MPSs
 save(predictedScore_factors, file = "ADNI/Data/predictedScore_factors_ADNI.RData")

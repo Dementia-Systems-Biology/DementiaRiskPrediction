@@ -2,7 +2,7 @@
 # File: ML_EMIF_PGS.R
 # Author: Jarno Koetsier
 # Date: August 6, 2023
-# Description: Machine learning (ML) using MRSs and PGSs as variables in the
+# Description: Machine learning (ML) using MPSs and PGSs as variables in the
 #              EMIF-AD cohort.
 # ============================================================================ #
 
@@ -107,7 +107,7 @@ performance_metric = "ROC"
 MLmethod = "glmnet"
 
 #=============================================================================#
-# MRS + PGS
+# MPS + PGS
 #=============================================================================#
 
 # Actual training
@@ -174,7 +174,7 @@ performance_metric = "ROC"
 MLmethod = "spls"
 
 #=============================================================================#
-# MRS + PGS
+# MPS + PGS
 #=============================================================================#
 
 # Actual training
@@ -223,7 +223,7 @@ auc(roc_test)
 #*****************************************************************************#
 
 #=============================================================================#
-# PGS + MRS
+# PGS + MPS
 #=============================================================================#
 
 X_train1 <- X_train
@@ -406,9 +406,9 @@ score <- c("ENonly", "sPLSonly", "RFonly","EN", "sPLS", "RF")
 scoreName <- c("PGSs (EN):",
                 "PGSs (sPLS-DA):",
                 "PGSs (RF-RFE):",
-                "MRSs/PGSs (EN):", 
-                "MRSs/PGSs (sPLS-DA):", 
-                "MRSs/PGSs (RF-RFE):")
+                "MPSs/PGSs (EN):", 
+                "MPSs/PGSs (sPLS-DA):", 
+                "MPSs/PGSs (RF-RFE):")
 ROCplot <- NULL                       # Data frame with sensitivities and specificities
 aucValue <- rep(NA, length(score))    # AUC
 liValue <- rep(NA, length(score))     # lower interval value of AUC
