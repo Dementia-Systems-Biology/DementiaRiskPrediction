@@ -39,7 +39,9 @@ The applied methodology consists of four main steps:
 
 ## Shiny
 You can also generate the multivariate risk scores for cognitive impairment and dementia youself in an R Shiny application:
+
 `runApp('Shiny')`
+
 Please note that it takes a long time to launch the app for the first time, because large models (> 10 GB) are being downloaded from [Zenodo](https://zenodo.org/record/8306113).
 
 ## Software
