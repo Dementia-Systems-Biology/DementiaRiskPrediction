@@ -47,7 +47,8 @@ load("Models/EMIF_Models/MRS/Fit_EMIF_MCI_RF.RData")
 pred_RF <- predict(fit, predictedScore_factors_fil, type = "prob")
 predictDF <- data.frame(RID = metaData_fil$RID, 
                         pred = pred_RF$MCI,
-                        Age = metaData_fil$Age)
+                        Age = metaData_fil$Age,
+                        Sex = metaData_fil$Sex)
 
 # Get mean prediction for same individual 
 # (some individuals have more than one baseline sample available)
@@ -55,7 +56,8 @@ predictDF <- predictDF %>%
   group_by(RID) %>%
   reframe(RID = RID,
           pred= mean(pred),
-          Age = Age)
+          Age = Age,
+          Sex = Sex)
 
 predictDF <- unique(predictDF)
 

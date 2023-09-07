@@ -18,7 +18,7 @@ cat("\014")
 
 # Load data
 load("EMIF-AD/Data/metaData_EMIF.RData")                # Meta data
-load("EMIF-AD/Data/predictedScore_factors_EMIF.RData")  # MRSs
+load("EMIF-AD/Data/predictedScore_factors_EMIF.RData")  # MPSs
 
 ###############################################################################
 
