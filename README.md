@@ -38,11 +38,11 @@ The applied methodology consists of four main steps:
 4. **Model extension** with genetic and cerebral spinal fluid biomarkers in the [EMIF-AD](https://github.com/jarnokoetsier/DementiaRiskPrediction/tree/main/EMIF-AD) cohort.
 
 ## Shiny
-You can also generate the multivariate risk scores for cognitive impairment and dementia youself in an R Shiny application:
+You can also generate the multivariate risk scores for cognitive impairment and dementia yourself in an R Shiny application. You can do this by downloading the current GitHub repository and running the following command:
 
-`runApp('Shiny')`
+`runApp('PATH/Shiny')` ("PATH" refers to the path to the GitHub directory)
 
-Please note that it takes a long time to launch the app for the first time, because large models (> 10 GB) are being downloaded from [Zenodo](https://zenodo.org/record/8306113).
+Please note that it takes a long time to launch the app for the first time because large models (> 10 GB) are being downloaded from [Zenodo](https://zenodo.org/record/8306113).
 
 ## Software
 * `R version 4.1.2`
