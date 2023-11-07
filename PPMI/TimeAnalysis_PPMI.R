@@ -66,7 +66,9 @@ load("Models/EMIF_Models/MRS/Fit_EMIF_MCI_RF.RData")
 # Make predictions
 pred_RF <- predict(fit, predictedScore_factors_fil, type = "prob")
 predictDF <- data.frame(PATNO = test$PATNO, 
-                        pred = pred_RF$MCI)
+                        pred = pred_RF$MCI,
+                        Age = test$age,
+                        Sex = test$sex)
 
 # Split into three classes
 predictDF$predClass <- "Intermediate risk"
@@ -171,7 +173,7 @@ survdiff(Surv(Time, Test) ~ predClass,
          data = kaplanDF1)
 
 # Cox regression
-coxph(Surv(Time, Test) ~ predClass, 
+coxph(Surv(Time, Test) ~ predClass + Age + Sex, 
          data = kaplanDF1) %>% 
   tbl_regression(exp = TRUE) 
 
