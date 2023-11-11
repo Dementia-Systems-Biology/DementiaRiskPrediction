@@ -109,7 +109,7 @@ for (i in 1:length(models)){
 
 # Set row names
 rownames(plotDF) <- c("Alcohol Intake", "BMI", "Depression", "Type II Diabetes",
-                      "Dietary Intake", "Education", "Age","HDL Chol.", "Heart Disease",
+                      "Unhealthy Diet", "Low Education", "Age","HDL Chol.", "Heart Disease",
                       "Physical Inact.", "Sex", "Smoking", "Syst. Blood Pressure", "Total Chol.")
 plotDF <- plotDF[,-1]
 
@@ -126,7 +126,7 @@ for (i in 1:ncol(plotDF)){
 data <- as.data.frame(t(plotDF))
 data <- rbind(rep(0.3,5) , rep(0,5) , data)
 data <- data[,c("Alcohol Intake", "BMI", "HDL Chol.", "Type II Diabetes",
-                "Dietary Intake", "Education", "Age","Total Chol.", "Heart Disease",
+                "Unhealthy Diet", "Low Education", "Age","Total Chol.", "Heart Disease",
                 "Physical Inact.", "Sex", "Smoking", "Syst. Blood Pressure", "Depression")]
 
 # Color vector
