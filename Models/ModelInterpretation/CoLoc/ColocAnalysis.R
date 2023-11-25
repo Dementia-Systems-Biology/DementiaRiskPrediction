@@ -16,7 +16,7 @@ library(httr)
 library(ggrepel)
 
 # Load GWAS summary statistics
-AD_summary <- fread("Data/ADFamilyHistory_2019_84.txt")
+AD_summary <- fread("Models/ModelInterpretation/CoLoc/ADFamilyHistory_2019_84.txt")
 AD_summary <- as.data.frame(AD_summary)
 rownames(AD_summary) <- AD_summary$SNP
 
@@ -25,7 +25,7 @@ load("Models/ModelInterpretation/selCpGs.RData")
 
 results_all <- NULL
 # For each model...
-for (i in 6:length(selCpGs)){
+for (i in 1:length(selCpGs)){
   
   # Get the included CpGs
   selCpGs1 <- selCpGs[[i]]
